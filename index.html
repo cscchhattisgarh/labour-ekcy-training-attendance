@@ -209,90 +209,106 @@
     <iframe id="googleForm" src="" frameborder="0">Loading Form...</iframe>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWErQ5BGaEmrodsqZdaOB7JY2tSNtcmCCBR_9azeEYFJX1lVlW7zw_Dl-ivyV34_QG/exec";                
-    const passwordForm = document.getElementById("passwordForm");
-    const passwordInput = document.getElementById("password");
-    const verifyButton = document.getElementById("verifyButton");
-    const message = document.getElementById("message");
-    const passwordContainer = document.getElementById("passwordContainer");
-    const formContainer = document.getElementById("formContainer");
-    const googleForm = document.getElementById("googleForm");
+ <script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWErQ5BGaEmrodsqZdaOB7JY2tSNtcmCCBR_9azeEYFJX1lVlW7zw_Dl-ivyV34_QG/exec";                
+  const passwordForm = document.getElementById("passwordForm");
+  const passwordInput = document.getElementById("password");
+  const verifyButton = document.getElementById("verifyButton");
+  const message = document.getElementById("message");
+  const passwordContainer = document.getElementById("passwordContainer");
+  const formContainer = document.getElementById("formContainer");
+  const googleForm = document.getElementById("googleForm");
 
-    // Dynamic Mask Overlay Handler
-    function updateMask(input) {
-      input.value = input.value.replace(/[^0-9]/g, '');
-      const len = input.value.length;
-      const spans = document.querySelectorAll('#passwordMask span');
+  function updateMask(input) {
+    input.value = input.value.replace(/[^0-9]/g, '');
+    const len = input.value.length;
+    const spans = document.querySelectorAll('#passwordMask span');
 
-      spans.forEach((span, index) => {
-        if (index < len) {
-          span.classList.add('filled');
-        } else {
-          span.classList.remove('filled');
-        }
-      });
+    spans.forEach((span, index) => {
+      if (index < len) {
+        span.classList.add('filled');
+      } else {
+        span.classList.remove('filled');
+      }
+    });
+  }
+
+  passwordForm.addEventListener("submit", function(e) {
+    e.preventDefault();
+    const pwd = passwordInput.value.trim();
+
+    if (!/^\d{6}$/.test(pwd)) {
+      message.textContent = "कृपया केवल 6 अंकों का Numeric Password दर्ज करें।";
+      message.className = "message error";
+      passwordInput.focus();
+      return;
     }
 
-    // Form Submit Handler
-    passwordForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      const pwd = passwordInput.value.trim();
+    verifyButton.disabled = true;
+    verifyButton.textContent = "Verifying...";
+    message.textContent = "Password verify किया जा रहा है...";
+    message.className = "message loading";
 
-      if (!/^\d{6}$/.test(pwd)) {
-        message.textContent = "कृपया केवल 6 अंकों का Numeric Password दर्ज करें।";
-        message.className = "message error";
-        passwordInput.focus();
-        return;
-      }
+    // Random unique callback
+    const cbName = "cb_" + Math.floor(Math.random() * 1000000);
+    let isHandled = false;
 
-      verifyButton.disabled = true;
-      verifyButton.textContent = "Verifying...";
-      message.textContent = "Password verify किया जा रहा है...";
-      message.className = "message loading";
-
-      // Fixed Callback Name
-      const cbName = "jsonp_cb_" + Math.round(100000 * Math.random());
-
-      window[cbName] = function(data) {
-        // Safe check for result or status
-        if (data.status === "success" || data.result === "success") {
-          googleForm.src = data.formUrl || data.url;
-          passwordContainer.style.display = "none";
-          formContainer.style.display = "block";
-          document.body.style.background = "#ffffff";
-        } else {
-          verifyButton.disabled = false;
-          verifyButton.textContent = "Verify & Continue";
-          message.textContent = "गलत Password! सही Password दर्ज करें।";
-          message.className = "message error";
-          passwordInput.value = "";
-          updateMask(passwordInput);
-          passwordInput.focus();
-        }
-        
-        delete window[cbName];
-        const scriptElem = document.getElementById(cbName);
-        if (scriptElem) scriptElem.remove();
-      };
-
-      const script = document.createElement("script");
-      script.id = cbName;
-      // Fixed URL string: action, password, callback, and timestamp
-      script.src = `${SCRIPT_URL}?action=checkPassword&password=${encodeURIComponent(pwd)}&callback=${cbName}&_ts=${new Date().getTime()}`;
-      
-      script.onerror = function() {
+    // Timeout safety net (10 Seconds)
+    const timeoutTimer = setTimeout(() => {
+      if (!isHandled) {
+        isHandled = true;
+        cleanup();
         verifyButton.disabled = false;
         verifyButton.textContent = "Verify & Continue";
-        message.textContent = "Connection Error! कृपया पुनः प्रयास करें।";
+        message.textContent = "Connection Timeout! कृपया पुनः प्रयास करें।";
         message.className = "message error";
-        delete window[cbName];
-        const scriptElem = document.getElementById(cbName);
-        if (scriptElem) scriptElem.remove();
-      };
+      }
+    }, 10000);
 
-      document.body.appendChild(script);
-    });
-  </script>
+    function cleanup() {
+      delete window[cbName];
+      const oldScript = document.getElementById(cbName);
+      if (oldScript) oldScript.remove();
+      clearTimeout(timeoutTimer);
+    }
+
+    window[cbName] = function(data) {
+      if (isHandled) return;
+      isHandled = true;
+      cleanup();
+
+      if (data && (data.status === "success" || data.result === "success")) {
+        googleForm.src = data.formUrl || data.url;
+        passwordContainer.style.display = "none";
+        formContainer.style.display = "block";
+        document.body.style.background = "#ffffff";
+      } else {
+        verifyButton.disabled = false;
+        verifyButton.textContent = "Verify & Continue";
+        message.textContent = "गलत Password! सही Password दर्ज करें।";
+        message.className = "message error";
+        passwordInput.value = "";
+        updateMask(passwordInput);
+        passwordInput.focus();
+      }
+    };
+
+    const script = document.createElement("script");
+    script.id = cbName;
+    script.src = `${SCRIPT_URL}?action=checkPassword&password=${encodeURIComponent(pwd)}&callback=${cbName}&_=${Date.now()}`;
+    
+    script.onerror = function() {
+      if (isHandled) return;
+      isHandled = true;
+      cleanup();
+      verifyButton.disabled = false;
+      verifyButton.textContent = "Verify & Continue";
+      message.textContent = "Connection Error! कृपया पुनः प्रयास करें।";
+      message.className = "message error";
+    };
+
+    document.body.appendChild(script);
+  });
+</script>
 </body>
 </html>
