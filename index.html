@@ -1,182 +1,75 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSC VLE Attendance</title>
-
+  <title>CSC VLE Attendance Portal</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: Arial, sans-serif;
       background: #f2f5f9;
       min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: flex; justify-content: center; align-items: center;
     }
-
     .container {
-      width: 92%;
-      max-width: 540px;
+      width: 92%; max-width: 500px;
       background: #ffffff;
-      border-radius: 16px;
-      padding: 30px 25px;
+      border-radius: 16px; padding: 30px 25px;
       box-shadow: 0 5px 25px rgba(0,0,0,0.12);
       text-align: center;
     }
-
-    .logo {
-      font-size: 45px;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      margin: 5px 0 8px;
-      font-size: 24px;
-      color: #1f2937;
-    }
-
-    .subtitle {
-      font-size: 15px;
-      color: #6b7280;
-      margin-bottom: 25px;
-      line-height: 1.5;
-    }
-
-    label {
-      display: block;
-      text-align: left;
-      font-size: 14px;
-      font-weight: bold;
-      color: #374151;
-      margin-bottom: 8px;
-    }
-
+    .logo { font-size: 45px; margin-bottom: 10px; }
+    h1 { margin: 5px 0 8px; font-size: 24px; color: #1f2937; }
+    .subtitle { font-size: 15px; color: #6b7280; margin-bottom: 25px; line-height: 1.5; }
+    label { display: block; text-align: left; font-size: 14px; font-weight: bold; color: #374151; margin-bottom: 8px; }
     input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 18px;
-      text-align: center;
-      outline: none;
-      letter-spacing: 2px;
+      width: 100%; padding: 14px; border: 1px solid #d1d5db;
+      border-radius: 8px; font-size: 18px; text-align: center; outline: none;
     }
-
-    input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
-    }
-
+    input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.12); }
     button {
-      width: 100%;
-      margin-top: 18px;
-      padding: 14px;
-      border: none;
-      border-radius: 8px;
-      background: #2563eb;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
+      width: 100%; margin-top: 18px; padding: 14px; border: none;
+      border-radius: 8px; background: #2563eb; color: white;
+      font-size: 17px; font-weight: bold; cursor: pointer;
     }
-
-    button:disabled {
-      background: #93c5fd;
-      cursor: not-allowed;
-    }
-
-    .message {
-      margin-top: 15px;
-      min-height: 22px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #dc2626;
-    }
-
-    .loading {
-      color: #2563eb;
-    }
-
-    .footer {
-      margin-top: 25px;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    #formContainer {
-      display: none;
-      width: 100%;
-      min-height: 100vh;
-      background: #ffffff;
-    }
-
-    #googleForm {
-      width: 100%;
-      height: 100vh;
-      min-height: 900px;
-      border: none;
-      display: block;
-    }
+    button:disabled { background: #93c5fd; cursor: not-allowed; }
+    .message { margin-top: 15px; min-height: 22px; font-size: 14px; font-weight: bold; }
+    .error { color: #dc2626; }
+    .loading { color: #2563eb; }
+    .footer { margin-top: 25px; font-size: 12px; color: #9ca3af; }
+    
+    #formContainer { display: none; width: 100%; min-height: 100vh; background: #ffffff; }
+    #googleForm { width: 100%; height: 100vh; min-height: 800px; border: none; }
   </style>
 </head>
-
 <body>
 
-  <!-- PASSWORD PAGE -->
+  <!-- LOGIN CONTAINER -->
   <div class="container" id="passwordContainer">
     <div class="logo">📋</div>
     <h1>CSC VLE Attendance</h1>
-
-    <div class="subtitle">
-      Attendance Form खोलने के लिए<br>
-      कृपया Password दर्ज करें।
-    </div>
+    <div class="subtitle">Attendance Form खोलने के लिए<br>कृपया Session Password दर्ज करें।</div>
 
     <form id="passwordForm">
       <label for="password">Password</label>
-      <input 
-        type="password" 
-        id="password" 
-        name="password" 
-        placeholder="Enter Password" 
-        autocomplete="off" 
-        required
-      >
-
-      <button type="submit" id="verifyButton">Verify & Continue</button>
+      <input type="password" id="password" placeholder="Enter Password" autocomplete="off" required>
+      <button type="submit" id="verifyButton">Verify & Open Form</button>
     </form>
 
     <div id="message" class="message"></div>
-
     <div class="footer">CSC State Office</div>
   </div>
 
-  <!-- GOOGLE FORM -->
+  <!-- GOOGLE FORM CONTAINER -->
   <div id="formContainer">
-    <iframe 
-      id="googleForm" 
-      src="https://docs.google.com/forms/d/e/1FAIpQLSfJVJFS5okUAEvOMj0HGc3fg9tOxdrynJfMk2iAkyEpj65nfA/viewform?embedded=true" 
-      frameborder="0" 
-      marginheight="0" 
-      marginwidth="0">
-      Loading…
-    </iframe>
+    <iframe id="googleForm" src="" frameborder="0">Loading Form...</iframe>
   </div>
 
   <script>
-    // App Script Ka Naya Executable URL
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxnj1PDT8zT6gWx-401u77g9Pyp-99zcBu-Wj5byuoRi5eEtJ4Vn3b9tV3N4S9anc2Lvg/exec";
+    // Apne Naye Deployment ka Web App Executable URL yahan daalein
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-qwTWhwPqKjfT4SyuGZwo8dnqneYpdArrE_a0ggEp09QAt2OrhSyNrjMXglpCrAyE6w/exec";
 
     const passwordForm = document.getElementById("passwordForm");
     const passwordInput = document.getElementById("password");
@@ -184,62 +77,53 @@
     const message = document.getElementById("message");
     const passwordContainer = document.getElementById("passwordContainer");
     const formContainer = document.getElementById("formContainer");
+    const googleForm = document.getElementById("googleForm");
 
-    passwordForm.addEventListener("submit", async function(event) {
-      event.preventDefault();
+    passwordForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const pwd = passwordInput.value.trim();
+      if (!pwd) return;
 
-      const password = passwordInput.value.trim();
-
-      if (!password) {
-        message.textContent = "कृपया Password दर्ज करें।";
-        message.className = "message error";
-        return;
-      }
-
-      // UI updates during loading
       verifyButton.disabled = true;
       verifyButton.textContent = "Verifying...";
       message.textContent = "Password verify किया जा रहा है...";
       message.className = "message loading";
 
-      try {
-        // Direct AJAX Call to Apps Script Web App
-        const response = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain;charset=utf-8"
-          },
-          body: JSON.stringify({ password: password }),
-          redirect: "follow"
-        });
-
-        const data = await response.json();
-
+      // Call via JSONP (Bypasses CORS completely)
+      window.handleAuthResponse = function(data) {
         if (data.success === true) {
-          // Password correct -> Show Form
+          // Dynamic load form URL from backend
+          googleForm.src = data.formUrl;
+          
           passwordContainer.style.display = "none";
           formContainer.style.display = "block";
-          document.body.style.display = "block";
           document.body.style.background = "#ffffff";
-          document.body.style.minHeight = "100vh";
         } else {
-          // Password wrong
           verifyButton.disabled = false;
-          verifyButton.textContent = "Verify & Continue";
-          message.textContent = "गलत Password. कृपया सही Password दर्ज करें।";
+          verifyButton.textContent = "Verify & Open Form";
+          message.textContent = "गलत Password! कृपया सही Password दर्ज करें।";
           message.className = "message error";
           passwordInput.value = "";
           passwordInput.focus();
         }
-      } catch (err) {
-        console.error("Auth error:", err);
+
+        const oldScript = document.getElementById("jsonpScript");
+        if (oldScript) oldScript.remove();
+      };
+
+      const script = document.createElement("script");
+      script.id = "jsonpScript";
+      script.src = `${SCRIPT_URL}?password=${encodeURIComponent(pwd)}&prefix=handleAuthResponse`;
+      
+      script.onerror = function() {
         verifyButton.disabled = false;
-        verifyButton.textContent = "Verify & Continue";
-        message.textContent = "Network Error! कृपया पुनः प्रयास करें।";
+        verifyButton.textContent = "Verify & Open Form";
+        message.textContent = "Connection Error! SCRIPT_URL re-check karein.";
         message.className = "message error";
-      }
+      };
+
+      document.body.appendChild(script);
     });
   </script>
-
 </body>
 </html>
