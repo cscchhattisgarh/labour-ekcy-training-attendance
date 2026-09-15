@@ -12,26 +12,39 @@
 
   <title>CSC VLE Attendance</title>
 
+
   <style>
 
     * {
       box-sizing: border-box;
     }
 
+
     body {
+
       margin: 0;
+
       padding: 0;
+
       font-family: Arial, sans-serif;
+
       background: #f2f5f9;
+
       min-height: 100vh;
 
       display: flex;
+
       justify-content: center;
+
       align-items: center;
+
     }
 
+
     .container {
+
       width: 92%;
+
       max-width: 430px;
 
       background: #ffffff;
@@ -41,25 +54,35 @@
       padding: 30px 25px;
 
       box-shadow:
-        0 5px 25px rgba(0, 0, 0, 0.12);
+        0 5px 25px rgba(0,0,0,0.12);
 
       text-align: center;
+
     }
+
 
     .logo {
+
       font-size: 45px;
+
       margin-bottom: 10px;
+
     }
 
+
     h1 {
+
       margin: 5px 0 8px;
 
       font-size: 24px;
 
       color: #1f2937;
+
     }
 
+
     .subtitle {
+
       font-size: 15px;
 
       color: #6b7280;
@@ -67,9 +90,12 @@
       margin-bottom: 25px;
 
       line-height: 1.5;
+
     }
 
+
     label {
+
       display: block;
 
       text-align: left;
@@ -81,15 +107,17 @@
       color: #374151;
 
       margin-bottom: 8px;
+
     }
 
+
     input {
+
       width: 100%;
 
       padding: 14px;
 
-      border:
-        1px solid #d1d5db;
+      border: 1px solid #d1d5db;
 
       border-radius: 8px;
 
@@ -100,17 +128,22 @@
       outline: none;
 
       letter-spacing: 2px;
+
     }
 
+
     input:focus {
+
       border-color: #2563eb;
 
       box-shadow:
-        0 0 0 2px
-        rgba(37, 99, 235, 0.12);
+        0 0 0 2px rgba(37,99,235,0.12);
+
     }
 
+
     button {
+
       width: 100%;
 
       margin-top: 18px;
@@ -130,18 +163,99 @@
       font-weight: bold;
 
       cursor: pointer;
+
     }
+
 
     button:hover {
+
       background: #1d4ed8;
+
     }
 
-    .footer {
-      margin-top: 25px;
 
-      font-size: 12px;
+    button:disabled {
 
-      color: #9ca3af;
+      background: #93c5fd;
+
+      cursor: not-allowed;
+
+    }
+
+
+    .message {
+
+      margin-top: 15px;
+
+      min-height: 22px;
+
+      font-size: 14px;
+
+      font-weight: bold;
+
+    }
+
+
+    .error {
+
+      color: #dc2626;
+
+    }
+
+
+    .loading {
+
+      color: #2563eb;
+
+    }
+
+
+    /*
+     * Google Form container
+     */
+
+    #formContainer {
+
+      display: none;
+
+      width: 100%;
+
+      min-height: 100vh;
+
+      background: #ffffff;
+
+    }
+
+
+    #googleForm {
+
+      width: 100%;
+
+      height: 100vh;
+
+      min-height: 900px;
+
+      border: none;
+
+      display: block;
+
+    }
+
+
+    /*
+     * Hidden verification iframe
+     */
+
+    #verifyFrame {
+
+      display: none;
+
+      width: 0;
+
+      height: 0;
+
+      border: 0;
+
     }
 
   </style>
@@ -151,15 +265,25 @@
 
 <body>
 
-  <div class="container">
+
+  <!-- ============================= -->
+  <!-- PASSWORD SCREEN                -->
+  <!-- ============================= -->
+
+  <div
+    class="container"
+    id="passwordContainer"
+  >
 
     <div class="logo">
       📋
     </div>
 
+
     <h1>
       CSC VLE Attendance
     </h1>
+
 
     <div class="subtitle">
 
@@ -170,43 +294,319 @@
     </div>
 
 
-    <!--
-      Password directly GitHub code में नहीं है.
-
-      यह form आपका Password
-      Google Apps Script को भेजता है.
-    -->
-
     <form
+      id="passwordForm"
+
       method="POST"
+
+      target="verifyFrame"
+
       action="https://script.google.com/macros/s/AKfycbyvYsU9wTSEuDqToLl2BLdthnpZvce-PrG_Aj_ELlXbn6pRkfLLTeoDWMBsu_R1_gUX2Q/exec"
-               >
+    >
+
 
       <label for="password">
+
         Password
+
       </label>
 
+
       <input
+
         type="password"
+
         id="password"
+
         name="password"
+
         placeholder="Enter Password"
+
         autocomplete="off"
+
         required
+
       >
 
-      <button type="submit">
+
+      <button
+        type="submit"
+        id="verifyButton"
+      >
+
         Verify & Continue
+
       </button>
+
 
     </form>
 
 
+    <div
+      id="message"
+      class="message"
+    ></div>
+
+
     <div class="footer">
+
       CSC State Office
+
     </div>
 
   </div>
+
+
+  <!-- ============================= -->
+  <!-- HIDDEN VERIFICATION FRAME     -->
+  <!-- ============================= -->
+
+  <iframe
+    name="verifyFrame"
+    id="verifyFrame"
+  ></iframe>
+
+
+  <!-- ============================= -->
+  <!-- GOOGLE FORM                   -->
+  <!-- ============================= -->
+
+  <div
+    id="formContainer"
+  >
+
+    <iframe
+      id="googleForm"
+
+      src="https://docs.google.com/forms/d/e/1FAIpQLSfJVJFS5okUAEvOMj0HGc3fg9tOxdrynJfMk2iAkyEpj65nfA/viewform?embedded=true"
+
+      frameborder="0"
+
+      marginheight="0"
+
+      marginwidth="0"
+
+      loading="lazy"
+    >
+
+      Loading…
+
+    </iframe>
+
+  </div>
+
+
+
+  <script>
+
+
+    const passwordForm =
+      document.getElementById(
+        "passwordForm"
+      );
+
+
+    const passwordInput =
+      document.getElementById(
+        "password"
+      );
+
+
+    const verifyButton =
+      document.getElementById(
+        "verifyButton"
+      );
+
+
+    const message =
+      document.getElementById(
+        "message"
+      );
+
+
+    const passwordContainer =
+      document.getElementById(
+        "passwordContainer"
+      );
+
+
+    const formContainer =
+      document.getElementById(
+        "formContainer"
+      );
+
+
+
+    /*
+     * Password submit
+     */
+
+    passwordForm.addEventListener(
+      "submit",
+      function(event) {
+
+        event.preventDefault();
+
+
+        const password =
+          passwordInput.value.trim();
+
+
+        if (!password) {
+
+          message.textContent =
+            "कृपया Password दर्ज करें।";
+
+          message.className =
+            "message error";
+
+          return;
+
+        }
+
+
+        verifyButton.disabled = true;
+
+        verifyButton.textContent =
+          "Verifying...";
+
+
+        message.textContent =
+          "Password verify किया जा रहा है...";
+
+        message.className =
+          "message loading";
+
+
+        /*
+         * Form को hidden iframe में submit करें
+         */
+
+        passwordForm.submit();
+
+      }
+    );
+
+
+
+    /*
+     * Apps Script से verification result
+     */
+
+    window.addEventListener(
+      "message",
+      function(event) {
+
+
+        /*
+         * Security check
+         */
+
+        if (
+          event.origin !==
+          "https://script.google.com"
+          &&
+          event.origin !==
+          "https://script.googleusercontent.com"
+        ) {
+
+          return;
+
+        }
+
+
+        const data = event.data;
+
+
+        if (
+          !data ||
+          data.type !==
+          "CSC_ATTENDANCE_AUTH"
+        ) {
+
+          return;
+
+        }
+
+
+
+        /*
+         * PASSWORD CORRECT
+         */
+
+        if (data.success === true) {
+
+
+          /*
+           * Password screen hide
+           */
+
+          passwordContainer.style.display =
+            "none";
+
+
+          /*
+           * Google Form show
+           */
+
+          formContainer.style.display =
+            "block";
+
+
+          /*
+           * Body layout reset
+           */
+
+          document.body.style.display =
+            "block";
+
+
+          document.body.style.background =
+            "#ffffff";
+
+
+          document.body.style.minHeight =
+            "100vh";
+
+        }
+
+
+
+        /*
+         * PASSWORD WRONG
+         */
+
+        else {
+
+
+          verifyButton.disabled =
+            false;
+
+
+          verifyButton.textContent =
+            "Verify & Continue";
+
+
+          message.textContent =
+            "गलत Password. कृपया सही Password दर्ज करें।";
+
+
+          message.className =
+            "message error";
+
+
+          passwordInput.value = "";
+
+          passwordInput.focus();
+
+        }
+
+      }
+    );
+
+
+  </script>
+
 
 </body>
 
