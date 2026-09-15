@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>CSC VLE Attendance</title>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f2f5f9;
+      min-height: 100vh;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 430px;
+
+      background: #ffffff;
+
+      border-radius: 16px;
+
+      padding: 30px 25px;
+
+      box-shadow:
+        0 5px 25px rgba(0, 0, 0, 0.12);
+
+      text-align: center;
+    }
+
+    .logo {
+      font-size: 45px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 5px 0 8px;
+
+      font-size: 24px;
+
+      color: #1f2937;
+    }
+
+    .subtitle {
+      font-size: 15px;
+
+      color: #6b7280;
+
+      margin-bottom: 25px;
+
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+
+      text-align: left;
+
+      font-size: 14px;
+
+      font-weight: bold;
+
+      color: #374151;
+
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+
+      padding: 14px;
+
+      border:
+        1px solid #d1d5db;
+
+      border-radius: 8px;
+
+      font-size: 18px;
+
+      text-align: center;
+
+      outline: none;
+
+      letter-spacing: 2px;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+
+      box-shadow:
+        0 0 0 2px
+        rgba(37, 99, 235, 0.12);
+    }
+
+    button {
+      width: 100%;
+
+      margin-top: 18px;
+
+      padding: 14px;
+
+      border: none;
+
+      border-radius: 8px;
+
+      background: #2563eb;
+
+      color: white;
+
+      font-size: 17px;
+
+      font-weight: bold;
+
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .footer {
+      margin-top: 25px;
+
+      font-size: 12px;
+
+      color: #9ca3af;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <div class="container">
+
+    <div class="logo">
+      📋
+    </div>
+
+    <h1>
+      CSC VLE Attendance
+    </h1>
+
+    <div class="subtitle">
+
+      Attendance Form खोलने के लिए<br>
+
+      कृपया Password दर्ज करें।
+
+    </div>
+
+
+    <!--
+      Password directly GitHub code में नहीं है.
+
+      यह form आपका Password
+      Google Apps Script को भेजता है.
+    -->
+
+    <form
+      method="POST"
+      action="https://script.google.com/macros/s/AKfycbyvYsU9wTSEuDqToLl2BLdthnpZvce-PrG_Aj_ELlXbn6pRkfLLTeoDWMBsu_R1_gUX2Q/exec"
+               >
+
+      <label for="password">
+        Password
+      </label>
+
+      <input
+        type="password"
+        id="password"
+        name="password"
+        placeholder="Enter Password"
+        autocomplete="off"
+        required
+      >
+
+      <button type="submit">
+        Verify & Continue
+      </button>
+
+    </form>
+
+
+    <div class="footer">
+      CSC State Office
+    </div>
+
+  </div>
+
+</body>
+
+</html>
