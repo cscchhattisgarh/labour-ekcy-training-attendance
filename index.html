@@ -210,8 +210,7 @@
   </div>
 
   <script>
-    // Configured Web App Executable URL
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWErQ5BGaEmrodsqZdaOB7JY2tSNtcmCCBR_9azeEYFJX1lVlW7zw_Dl-ivyV34_QG/exec";                
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxWErQ5BGaEmrodsqZdaOB7JY2tSNtcmCCBR_9azeEYFJX1lVlW7zw_Dl-ivyV34_QG/exec";                
     const passwordForm = document.getElementById("passwordForm");
     const passwordInput = document.getElementById("password");
     const verifyButton = document.getElementById("verifyButton");
@@ -222,9 +221,7 @@
 
     // Dynamic Mask Overlay Handler
     function updateMask(input) {
-      // Force Numeric input only
       input.value = input.value.replace(/[^0-9]/g, '');
-      
       const len = input.value.length;
       const spans = document.querySelectorAll('#passwordMask span');
 
@@ -242,7 +239,6 @@
       e.preventDefault();
       const pwd = passwordInput.value.trim();
 
-      // Strict 6-Digit Numeric Check
       if (!/^\d{6}$/.test(pwd)) {
         message.textContent = "कृपया केवल 6 अंकों का Numeric Password दर्ज करें।";
         message.className = "message error";
@@ -255,12 +251,13 @@
       message.textContent = "Password verify किया जा रहा है...";
       message.className = "message loading";
 
-      // JSONP Authentication Handler
-      const cbName = "auth_cb_" + Date.now();
+      // Fixed Callback Name
+      const cbName = "jsonp_cb_" + Math.round(100000 * Math.random());
 
       window[cbName] = function(data) {
-        if (data.success === true) {
-          googleForm.src = data.formUrl;
+        // Safe check for result or status
+        if (data.status === "success" || data.result === "success") {
+          googleForm.src = data.formUrl || data.url;
           passwordContainer.style.display = "none";
           formContainer.style.display = "block";
           document.body.style.background = "#ffffff";
@@ -273,13 +270,16 @@
           updateMask(passwordInput);
           passwordInput.focus();
         }
+        
         delete window[cbName];
-        document.getElementById(cbName)?.remove();
+        const scriptElem = document.getElementById(cbName);
+        if (scriptElem) scriptElem.remove();
       };
 
       const script = document.createElement("script");
       script.id = cbName;
-      script.src = `${SCRIPT_URL}?password=${encodeURIComponent(pwd)}&prefix=${cbName}`;
+      // Fixed URL string: action, password, callback, and timestamp
+      script.src = `${SCRIPT_URL}?action=checkPassword&password=${encodeURIComponent(pwd)}&callback=${cbName}&_ts=${new Date().getTime()}`;
       
       script.onerror = function() {
         verifyButton.disabled = false;
@@ -287,6 +287,8 @@
         message.textContent = "Connection Error! कृपया पुनः प्रयास करें।";
         message.className = "message error";
         delete window[cbName];
+        const scriptElem = document.getElementById(cbName);
+        if (scriptElem) scriptElem.remove();
       };
 
       document.body.appendChild(script);
