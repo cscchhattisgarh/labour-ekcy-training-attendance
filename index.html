@@ -49,12 +49,22 @@
   <!-- LOGIN CONTAINER -->
   <div class="container" id="passwordContainer">
     <div class="logo">📋</div>
-    <h1>CSC VLE Attendance</h1>
-    <div class="subtitle">Attendance Form खोलने के लिए<br>कृपया Session Password दर्ज करें।</div>
+    <h1>CSC VLE Attendance for Labour eKCY Training</h1>
+    <div class="subtitle">Attendance Form खोलने के लिए<br>कृपया Training Password दर्ज करें।</div>
 
     <form id="passwordForm">
       <label for="password">Password</label>
-      <input type="password" id="password" placeholder="Enter Password" autocomplete="off" required>
+      <input 
+  type="text" 
+  inputmode="numeric" 
+  id="password" 
+  placeholder="Enter Password" 
+  maxlength="6" 
+  autocomplete="off" 
+  pattern="\d{6}"
+  oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+  required
+>
       <button type="submit" id="verifyButton">Verify & Open Form</button>
     </form>
 
@@ -82,7 +92,12 @@ const googleForm = document.getElementById("googleForm");
 passwordForm.addEventListener("submit", function(e) {
   e.preventDefault();
   const pwd = passwordInput.value.trim();
-  if (!pwd) return;
+ if (!/^\d{6}$/.test(pwd)) {
+    message.textContent = "कृपया केवल 6 अंकों का Numeric Password दर्ज करें।";
+    message.className = "message error";
+    passwordInput.focus();
+    return;
+  }
 
   verifyButton.disabled = true;
   verifyButton.textContent = "Verifying...";
