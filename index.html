@@ -71,59 +71,59 @@
     // Apne Naye Deployment ka Web App Executable URL yahan daalein
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-qwTWhwPqKjfT4SyuGZwo8dnqneYpdArrE_a0ggEp09QAt2OrhSyNrjMXglpCrAyE6w/exec";
 
-    const passwordForm = document.getElementById("passwordForm");
-    const passwordInput = document.getElementById("password");
-    const verifyButton = document.getElementById("verifyButton");
-    const message = document.getElementById("message");
-    const passwordContainer = document.getElementById("passwordContainer");
-    const formContainer = document.getElementById("formContainer");
-    const googleForm = document.getElementById("googleForm");
+const passwordForm = document.getElementById("passwordForm");
+const passwordInput = document.getElementById("password");
+const verifyButton = document.getElementById("verifyButton");
+const message = document.getElementById("message");
+const passwordContainer = document.getElementById("passwordContainer");
+const formContainer = document.getElementById("formContainer");
+const googleForm = document.getElementById("googleForm");
 
-    passwordForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      const pwd = passwordInput.value.trim();
-      if (!pwd) return;
+passwordForm.addEventListener("submit", function(e) {
+  e.preventDefault();
+  const pwd = passwordInput.value.trim();
+  if (!pwd) return;
 
-      verifyButton.disabled = true;
-      verifyButton.textContent = "Verifying...";
-      message.textContent = "Password verify किया जा रहा है...";
-      message.className = "message loading";
+  verifyButton.disabled = true;
+  verifyButton.textContent = "Verifying...";
+  message.textContent = "Checking Password...";
+  message.className = "message loading";
 
-      // Call via JSONP (Bypasses CORS completely)
-      window.handleAuthResponse = function(data) {
-        if (data.success === true) {
-          // Dynamic load form URL from backend
-          googleForm.src = data.formUrl;
-          
-          passwordContainer.style.display = "none";
-          formContainer.style.display = "block";
-          document.body.style.background = "#ffffff";
-        } else {
-          verifyButton.disabled = false;
-          verifyButton.textContent = "Verify & Open Form";
-          message.textContent = "गलत Password! कृपया सही Password दर्ज करें।";
-          message.className = "message error";
-          passwordInput.value = "";
-          passwordInput.focus();
-        }
+  // Unique callback function to prevent caching delay
+  const cbName = "cb_" + Date.now();
 
-        const oldScript = document.getElementById("jsonpScript");
-        if (oldScript) oldScript.remove();
-      };
+  window[cbName] = function(data) {
+    if (data.success === true) {
+      googleForm.src = data.formUrl;
+      passwordContainer.style.display = "none";
+      formContainer.style.display = "block";
+      document.body.style.background = "#ffffff";
+    } else {
+      verifyButton.disabled = false;
+      verifyButton.textContent = "Verify & Open Form";
+      message.textContent = "गलत Password! सही Password दर्ज करें।";
+      message.className = "message error";
+      passwordInput.value = "";
+      passwordInput.focus();
+    }
+    delete window[cbName];
+    document.getElementById(cbName)?.remove();
+  };
 
-      const script = document.createElement("script");
-      script.id = "jsonpScript";
-      script.src = `${SCRIPT_URL}?password=${encodeURIComponent(pwd)}&prefix=handleAuthResponse`;
-      
-      script.onerror = function() {
-        verifyButton.disabled = false;
-        verifyButton.textContent = "Verify & Open Form";
-        message.textContent = "Connection Error! SCRIPT_URL re-check karein.";
-        message.className = "message error";
-      };
+  const script = document.createElement("script");
+  script.id = cbName;
+  script.src = `${SCRIPT_URL}?password=${encodeURIComponent(pwd)}&prefix=${cbName}`;
 
-      document.body.appendChild(script);
-    });
+  script.onerror = function() {
+    verifyButton.disabled = false;
+    verifyButton.textContent = "Verify & Open Form";
+    message.textContent = "Connection Error! Apps Script deployment me 'Anyone' access enable karein.";
+    message.className = "message error";
+    delete window[cbName];
+  };
+
+  document.body.appendChild(script);
+});
   </script>
 </body>
 </html>
