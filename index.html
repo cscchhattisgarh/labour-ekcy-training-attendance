@@ -6,168 +6,57 @@
   <title>CSC VLE Training Attendance Form</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background: #f2f5f9;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      margin: 0; padding: 0; font-family: Arial, sans-serif;
+      background: #f2f5f9; min-height: 100vh;
+      display: flex; justify-content: center; align-items: center;
     }
-
     .container {
-      width: 92%;
-      max-width: 500px;
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 30px 25px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.12);
-      text-align: center;
+      width: 92%; max-width: 500px; background: #ffffff;
+      border-radius: 16px; padding: 30px 25px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.12); text-align: center;
     }
+    .logo { font-size: 45px; margin-bottom: 10px; }
+    h1 { margin: 5px 0 4px; font-size: 22px; color: #1f2937; }
+    h2 { margin: 0 0 18px; font-size: 18px; color: #2563eb; font-weight: 600; }
+    .subtitle { font-size: 15px; color: #6b7280; margin-bottom: 25px; line-height: 1.5; }
+    label { display: block; text-align: left; font-size: 14px; font-weight: bold; color: #374151; margin-bottom: 8px; }
 
-    .logo {
-      font-size: 45px;
-      margin-bottom: 10px;
-    }
-
-    h1 {
-      margin: 5px 0 4px;
-      font-size: 22px;
-      color: #1f2937;
-    }
-
-    h2 {
-      margin: 0 0 18px;
-      font-size: 18px;
-      color: #2563eb;
-      font-weight: 600;
-    }
-
-    .subtitle {
-      font-size: 15px;
-      color: #6b7280;
-      margin-bottom: 25px;
-      line-height: 1.5;
-    }
-
-    label {
-      display: block;
-      text-align: left;
-      font-size: 14px;
-      font-weight: bold;
-      color: #374151;
-      margin-bottom: 8px;
-    }
-
-    /* Masked Password Field Styling */
-    .password-wrapper {
-      position: relative;
-      width: 100%;
-    }
-
+    .password-wrapper { position: relative; width: 100%; }
     .password-mask {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 14px;
-      pointer-events: none;
-      font-size: 26px;
-      color: #d1d5db;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; justify-content: center; align-items: center; gap: 14px;
+      pointer-events: none; font-size: 26px; color: #d1d5db;
     }
-
-    .password-mask span.filled {
-      color: #1f2937;
-    }
+    .password-mask span.filled { color: #1f2937; }
 
     input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      font-size: 18px;
-      text-align: center;
-      outline: none;
-      background: transparent;
-      color: transparent;
-      caret-color: #2563eb;
-      letter-spacing: 12px;
+      width: 100%; padding: 14px; border: 1px solid #d1d5db;
+      border-radius: 8px; font-size: 18px; text-align: center;
+      outline: none; background: transparent; color: transparent;
+      caret-color: #2563eb; letter-spacing: 12px;
     }
-
-    input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 2px rgba(37,99,235,0.12);
-    }
+    input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.12); }
 
     button {
-      width: 100%;
-      margin-top: 22px;
-      padding: 14px;
-      border: none;
-      border-radius: 8px;
-      background: #2563eb;
-      color: white;
-      font-size: 17px;
-      font-weight: bold;
-      cursor: pointer;
+      width: 100%; margin-top: 22px; padding: 14px; border: none;
+      border-radius: 8px; background: #2563eb; color: white;
+      font-size: 17px; font-weight: bold; cursor: pointer;
     }
 
-    button:disabled {
-      background: #93c5fd;
-      cursor: not-allowed;
-    }
+    .message { margin-top: 15px; min-height: 22px; font-size: 14px; font-weight: bold; }
+    .error { color: #dc2626; }
+    .loading { color: #2563eb; }
+    .footer { margin-top: 25px; font-size: 12px; color: #9ca3af; }
 
-    .message {
-      margin-top: 15px;
-      min-height: 22px;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #dc2626;
-    }
-
-    .loading {
-      color: #2563eb;
-    }
-
-    .footer {
-      margin-top: 25px;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    #formContainer {
-      display: none;
-      width: 100%;
-      min-height: 100vh;
-      background: #ffffff;
-    }
-
-    #googleForm {
-      width: 100%;
-      height: 100vh;
-      min-height: 800px;
-      border: none;
-      display: block;
-    }
+    #formContainer { display: none; width: 100%; min-height: 100vh; background: #ffffff; }
+    #googleForm { width: 100%; height: 100vh; min-height: 800px; border: none; display: block; }
   </style>
 </head>
 
 <body>
 
-  <!-- LOGIN CONTAINER -->
   <div class="container" id="passwordContainer">
     <div class="logo">📋</div>
     <h1>CSC VLE Attendance For</h1>
@@ -204,13 +93,15 @@
     <div class="footer">CSC State Office</div>
   </div>
 
-  <!-- GOOGLE FORM CONTAINER -->
   <div id="formContainer">
     <iframe id="googleForm" src="" frameborder="0">Loading Form...</iframe>
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNzH6qV333xpwKMVgYqmVgJMFAginVyd2aeRLk_4GIMWXrl0Is7JrofMOldKnxbsNJiQ/exec";                
+    // CONFIGURATION
+    const CORRECT_PASSWORD = "123456";
+    const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfJVJFS5okUAEvOMj0HGc3fg9tOxdrynJfMk2iAkyEpj65nfA/viewform?embedded=true";
+
     const passwordForm = document.getElementById("passwordForm");
     const passwordInput = document.getElementById("password");
     const verifyButton = document.getElementById("verifyButton");
@@ -223,13 +114,9 @@
       input.value = input.value.replace(/[^0-9]/g, '');
       const len = input.value.length;
       const spans = document.querySelectorAll('#passwordMask span');
-
       spans.forEach((span, index) => {
-        if (index < len) {
-          span.classList.add('filled');
-        } else {
-          span.classList.remove('filled');
-        }
+        if (index < len) { span.classList.add('filled'); } 
+        else { span.classList.remove('filled'); }
       });
     }
 
@@ -244,53 +131,24 @@
         return;
       }
 
-      verifyButton.disabled = true;
-      verifyButton.textContent = "Verifying...";
-      message.textContent = "Password verify किया जा रहा है...";
+      message.textContent = "Verifying...";
       message.className = "message loading";
 
-      // Global Callback Setup
-      const cbName = "vle_cb_" + Math.floor(Math.random() * 1000000);
-
-      window[cbName] = function(data) {
-        // Cleanup script tag
-        delete window[cbName];
-        const sc = document.getElementById(cbName);
-        if (sc) sc.remove();
-
-        if (data && (data.status === "success" || data.result === "success")) {
-          googleForm.src = data.formUrl;
+      // Direct local verification (Instant & No Network Failure Possible)
+      setTimeout(() => {
+        if (pwd === CORRECT_PASSWORD) {
+          googleForm.src = FORM_URL;
           passwordContainer.style.display = "none";
           formContainer.style.display = "block";
           document.body.style.background = "#ffffff";
         } else {
-          verifyButton.disabled = false;
-          verifyButton.textContent = "Verify & Continue";
           message.textContent = "गलत Password! सही Password दर्ज करें।";
           message.className = "message error";
           passwordInput.value = "";
           updateMask(passwordInput);
           passwordInput.focus();
         }
-      };
-
-      // Create Dynamic Script Tag
-      const script = document.createElement("script");
-      script.id = cbName;
-      script.src = `${SCRIPT_URL}?password=${encodeURIComponent(pwd)}&callback=${cbName}&_=${Date.now()}`;
-      
-      script.onerror = function() {
-        delete window[cbName];
-        const sc = document.getElementById(cbName);
-        if (sc) sc.remove();
-
-        verifyButton.disabled = false;
-        verifyButton.textContent = "Verify & Continue";
-        message.textContent = "Connection Error! कृपया पुनः प्रयास करें।";
-        message.className = "message error";
-      };
-
-      document.body.appendChild(script);
+      }, 300);
     });
   </script>
 </body>
