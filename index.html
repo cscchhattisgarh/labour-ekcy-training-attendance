@@ -44,6 +44,7 @@
       border-radius: 8px; background: #2563eb; color: white;
       font-size: 17px; font-weight: bold; cursor: pointer;
     }
+    button:disabled { background: #93c5fd; cursor: not-allowed; }
 
     .message { margin-top: 15px; min-height: 22px; font-size: 14px; font-weight: bold; }
     .error { color: #dc2626; }
@@ -98,9 +99,16 @@
   </div>
 
   <script>
-    // CONFIGURATION
-    const CORRECT_PASSWORD = "987654";
+    // ================= CONFIGURATION =================
+    const GITHUB_USERNAME = "YOUR_GITHUB_USERNAME"; // Apna Username Daalein
+    const REPO_NAME = "YOUR_REPO_NAME";             // Apni Repo Ka Naam Daalein
+    
+    // Direct GitHub Raw File URL
+    const CONFIG_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/config.json`;
+
+    // Google Form Link
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true";
+    // =================================================
 
     const passwordForm = document.getElementById("passwordForm");
     const passwordInput = document.getElementById("password");
@@ -120,35 +128,79 @@
       });
     }
 
-    passwordForm.addEventListener("submit", function(e) {
-      e.preventDefault();
-      const pwd = passwordInput.value.trim();
+    // Config Fetcher
+    async function getConfig() {
+      try {
+        const res = await fetch(CONFIG_RAW_URL + '?_=' + Date.now());
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) {
+        return null;
+      }
+    }
 
-      if (!/^\d{6}$/.test(pwd)) {
+    // World Time API
+    async function getCurrentISTTime() {
+      try {
+        const response = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Kolkata');
+        const data = await response.json();
+        return new Date(data.dateTime);
+      } catch (err) {
+        return new Date();
+      }
+    }
+
+    passwordForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const userPwd = passwordInput.value.trim();
+
+      if (!/^\d{6}$/.test(userPwd)) {
         message.textContent = "कृपया केवल 6 अंकों का Numeric Password दर्ज करें।";
         message.className = "message error";
         passwordInput.focus();
         return;
       }
 
-      message.textContent = "Verifying...";
+      verifyButton.disabled = true;
+      message.textContent = "Verifying Config...";
       message.className = "message loading";
 
-      // Direct local verification (Instant & No Network Failure Possible)
-      setTimeout(() => {
-        if (pwd === CORRECT_PASSWORD) {
-          googleForm.src = FORM_URL;
-          passwordContainer.style.display = "none";
-          formContainer.style.display = "block";
-          document.body.style.background = "#ffffff";
-        } else {
-          message.textContent = "गलत Password! सही Password दर्ज करें।";
-          message.className = "message error";
-          passwordInput.value = "";
-          updateMask(passwordInput);
-          passwordInput.focus();
-        }
-      }, 300);
+      const config = await getConfig();
+
+      if (!config || !config.password) {
+        verifyButton.disabled = false;
+        message.textContent = "Config File Read Error! Admin se sampark karein.";
+        message.className = "message error";
+        return;
+      }
+
+      const currentTime = await getCurrentISTTime();
+      const expiryTime = new Date(config.expiry);
+
+      // Expiry Check
+      if (currentTime > expiryTime) {
+        verifyButton.disabled = false;
+        message.textContent = "यह Training Password Expire हो चुका है!";
+        message.className = "message error";
+        passwordInput.value = "";
+        updateMask(passwordInput);
+        return;
+      }
+
+      // Password Verification
+      if (userPwd === config.password) {
+        googleForm.src = FORM_URL;
+        passwordContainer.style.display = "none";
+        formContainer.style.display = "block";
+        document.body.style.background = "#ffffff";
+      } else {
+        verifyButton.disabled = false;
+        message.textContent = "गलत Password! सही Password दर्ज करें।";
+        message.className = "message error";
+        passwordInput.value = "";
+        updateMask(passwordInput);
+        passwordInput.focus();
+      }
     });
   </script>
 </body>
