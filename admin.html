@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+    h2 { margin-top: 0; color: #1e293b; text-align: center; }
+    label { font-weight: bold; font-size: 14px; color: #334155; display: block; margin: 15px 0 5px; }
+    input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px; outline: none; }
+    input:focus { border-color: #2563eb; }
+    button { width: 100%; margin-top: 25px; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #94a3b8; }
+    .status { margin-top: 15px; font-weight: bold; text-align: center; font-size: 14px; }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>⚙️ CSC Attendance Admin</h2>
+
+    <label for="token">GitHub Personal Access Token (PAT):</label>
+    <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" required>
+
+    <label for="password">New Password (6 Digits):</label>
+    <input type="text" id="password" maxlength="6" placeholder="123456" required>
+
+    <label for="expiry">Expiry Date & Time:</label>
+    <input type="datetime-local" id="expiry" required>
+
+    <button id="saveBtn" onclick="updateConfig()">Save & Deploy to GitHub</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script>
+    // ================= CONFIGURATION =================
+    const GITHUB_USERNAME = "YOUR_GITHUB_USERNAME"; // Apna GitHub Username Yahan Likhein
+    const REPO_NAME = "YOUR_REPO_NAME";             // Apni Repository Ka Naam Yahan Likhein
+    const FILE_PATH = "config.json";                 // File ka path
+    // =================================================
+
+    // Local Storage se token auto-fill karne ke liye
+    document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
+
+    async function updateConfig() {
+      const token = document.getElementById("token").value.trim();
+      const pwd = document.getElementById("password").value.trim();
+      const exp = document.getElementById("expiry").value;
+      const status = document.getElementById("status");
+      const saveBtn = document.getElementById("saveBtn");
+
+      if (!token || !pwd || !exp) {
+        status.textContent = "Kripya sabhi fields bharein!";
+        status.className = "status error";
+        return;
+      }
+
+      if (!/^\d{6}$/.test(pwd)) {
+        status.textContent = "Password keval 6 numeric digits ka hona chahiye!";
+        status.className = "status error";
+        return;
+      }
+
+      // Token ko browser local storage me save karein taaki baar-baar na daalna pade
+      localStorage.setItem("gh_pat", token);
+
+      saveBtn.disabled = true;
+      status.textContent = "Updating GitHub Repository...";
+      status.className = "status";
+
+      try {
+        const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+        // Step 1: Config file ka current SHA hash fetch karein (GitHub API rule)
+        const getRes = await fetch(apiUrl, {
+          headers: { "Authorization": `token ${token}` }
+        });
+
+        let sha = "";
+        if (getRes.ok) {
+          const getData = await getRes.json();
+          sha = getData.sha;
+        }
+
+        // Step 2: Naya JSON payload banayein
+        const newConfig = {
+          password: pwd,
+          expiry: exp
+        };
+
+        const contentEncoded = btoa(JSON.stringify(newConfig, null, 2));
+
+        // Step 3: File Update Commit karein
+        const putRes = await fetch(apiUrl, {
+          method: "PUT",
+          headers: {
+            "Authorization": `token ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: `Updated Attendance Password & Expiry via Admin Panel`,
+            content: contentEncoded,
+            sha: sha ? sha : undefined
+          })
+        });
+
+        if (putRes.ok) {
+          status.textContent = "✅ Config Successfully Updated!";
+          status.className = "status success";
+        } else {
+          const errData = await putRes.json();
+          status.textContent = "Error: " + (errData.message || "Failed to update");
+          status.className = "status error";
+        }
+      } catch (err) {
+        status.textContent = "Network Error! Connection check karein.";
+        status.className = "status error";
+      } finally {
+        saveBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
