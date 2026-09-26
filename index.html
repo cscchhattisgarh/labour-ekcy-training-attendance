@@ -100,14 +100,11 @@
 
   <script>
     // ================= CONFIGURATION =================
-    const GITHUB_USERNAME = "cscchhattisgarh"; // Apna Username Daalein
-    const REPO_NAME = "labour-ekcy-training-attendance";             // Apni Repo Ka Naam Daalein
+    const GITHUB_USERNAME = "cscchhattisgarh"; 
+    const REPO_NAME = "labour-ekcy-training-attendance"; 
     
     // Direct GitHub Raw File URL
     const CONFIG_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/config.json`;
-
-    // Google Form Link
-    const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true";
     // =================================================
 
     const passwordForm = document.getElementById("passwordForm");
@@ -167,7 +164,7 @@
 
       const config = await getConfig();
 
-      if (!config || !config.password) {
+      if (!config || !config.password || !config.form_url) {
         verifyButton.disabled = false;
         message.textContent = "Config File Read Error! Admin se sampark karein.";
         message.className = "message error";
@@ -189,7 +186,7 @@
 
       // Password Verification
       if (userPwd === config.password) {
-        googleForm.src = FORM_URL;
+        googleForm.src = config.form_url; // Dynamic Form URL set hoga
         passwordContainer.style.display = "none";
         formContainer.style.display = "block";
         document.body.style.background = "#ffffff";
