@@ -3,9 +3,9 @@
     {
       "id": "labour_ekyc",
       "name": "Labour eKYC Training",
-      "password": "",
-      "expiry": "",
-      "form_url": ""
+      "password": "789987",
+      "expiry": "2026-09-26T17:00:00+05:30",
+      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true"
     },
     {
       "id": "wifi_choupal",
