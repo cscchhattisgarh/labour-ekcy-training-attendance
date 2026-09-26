@@ -33,7 +33,7 @@
     <label for="password">New Password (6 Digits):</label>
     <input type="text" id="password" maxlength="6" placeholder="123456" required>
 
-    <label for="expiry">Expiry Date & Time:</label>
+    <label for="expiry">Expiry Date & Time (IST):</label>
     <input type="datetime-local" id="expiry" required>
 
     <button id="saveBtn" onclick="updateConfig()">Save & Deploy to GitHub</button>
@@ -53,7 +53,7 @@
       const token = document.getElementById("token").value.trim();
       const formUrl = document.getElementById("formUrl").value.trim();
       const pwd = document.getElementById("password").value.trim();
-      const exp = document.getElementById("expiry").value;
+      let exp = document.getElementById("expiry").value;
       const status = document.getElementById("status");
       const saveBtn = document.getElementById("saveBtn");
 
@@ -67,6 +67,11 @@
         status.textContent = "Password keval 6 numeric digits ka hona chahiye!";
         status.className = "status error";
         return;
+      }
+
+      // Add IST timezone (+05:30) if not present
+      if (!exp.includes('+') && !exp.includes('Z')) {
+        exp = exp + ":00+05:30";
       }
 
       localStorage.setItem("gh_pat", token);
