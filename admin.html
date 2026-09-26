@@ -27,6 +27,9 @@
     <label for="token">GitHub Personal Access Token (PAT):</label>
     <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" required>
 
+    <label for="formUrl">Google Form Embed URL:</label>
+    <input type="url" id="formUrl" placeholder="https://docs.google.com/forms/d/e/.../viewform?embedded=true" required>
+
     <label for="password">New Password (6 Digits):</label>
     <input type="text" id="password" maxlength="6" placeholder="123456" required>
 
@@ -39,9 +42,9 @@
 
   <script>
     // ================= CONFIGURATION =================
-    const GITHUB_USERNAME = "cscchhattisgarh"; // Apna GitHub Username Yahan Likhein
-    const REPO_NAME = "labour-ekcy-training-attendance";             // Apni Repository Ka Naam Yahan Likhein
-    const FILE_PATH = "config.json";                 // File ka path
+    const GITHUB_USERNAME = "cscchhattisgarh"; 
+    const REPO_NAME = "labour-ekcy-training-attendance"; 
+    const FILE_PATH = "config.json"; 
     // =================================================
 
     // Local Storage se token auto-fill karne ke liye
@@ -49,12 +52,13 @@
 
     async function updateConfig() {
       const token = document.getElementById("token").value.trim();
+      const formUrl = document.getElementById("formUrl").value.trim();
       const pwd = document.getElementById("password").value.trim();
       const exp = document.getElementById("expiry").value;
       const status = document.getElementById("status");
       const saveBtn = document.getElementById("saveBtn");
 
-      if (!token || !pwd || !exp) {
+      if (!token || !formUrl || !pwd || !exp) {
         status.textContent = "Kripya sabhi fields bharein!";
         status.className = "status error";
         return;
@@ -66,7 +70,6 @@
         return;
       }
 
-      // Token ko browser local storage me save karein taaki baar-baar na daalna pade
       localStorage.setItem("gh_pat", token);
 
       saveBtn.disabled = true;
@@ -76,7 +79,7 @@
       try {
         const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
 
-        // Step 1: Config file ka current SHA hash fetch karein (GitHub API rule)
+        // Step 1: Current SHA fetch karein
         const getRes = await fetch(apiUrl, {
           headers: { "Authorization": `token ${token}` }
         });
@@ -87,15 +90,16 @@
           sha = getData.sha;
         }
 
-        // Step 2: Naya JSON payload banayein
+        // Step 2: Naya JSON payload banayein (form_url ke saath)
         const newConfig = {
           password: pwd,
-          expiry: exp
+          expiry: exp,
+          form_url: formUrl
         };
 
-        const contentEncoded = btoa(JSON.stringify(newConfig, null, 2));
+        const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(newConfig, null, 2))));
 
-        // Step 3: File Update Commit karein
+        // Step 3: Commit updates
         const putRes = await fetch(apiUrl, {
           method: "PUT",
           headers: {
@@ -103,7 +107,7 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            message: `Updated Attendance Password & Expiry via Admin Panel`,
+            message: `Updated Form URL, Password & Expiry via Admin Panel`,
             content: contentEncoded,
             sha: sha ? sha : undefined
           })
