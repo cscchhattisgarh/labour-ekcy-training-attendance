@@ -57,9 +57,9 @@
       <label for="password">New Password (6 Digits): <span>*</span></label>
       <input type="text" id="password" maxlength="6" pattern="\d{6}" placeholder="123456" disabled required>
 
-      <label for="expiry">Expiry Date & Time (IST): <span>*</span></label>
-      <input type="text" id="expiry" placeholder="MM/DD/YYYY, HH:MM:00" onfocus="(this.type='datetime-local')" onblur="if(!this.value)this.type='text'" disabled required>
-      <div class="note">Format Placeholder: MM/DD/YYYY, HH:MM:00 (Seconds auto set to 00)</div>
+      <label for="expiry">Expiry Date & Time: <span>*</span></label>
+      <input type="datetime-local" id="expiry" disabled required>
+      <div class="note">Select date and time in Indian Standard Time (IST)</div>
 
       <div class="btn-group">
         <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Current Settings</button>
@@ -85,7 +85,6 @@
 
     document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
 
-    // Dropdown Selection ke aadhar par inputs enable/disable karne ka function
     function handleTrainingChange() {
       const selectedValue = document.getElementById("trainingSelect").value;
       const isSelected = !!selectedValue;
@@ -96,21 +95,22 @@
       document.getElementById("fetchBtn").disabled = !isSelected;
       document.getElementById("saveBtn").disabled = !isSelected;
 
-      // Status & live settings box ko clear karna jab training change ho
       document.getElementById("currentConfigBox").style.display = "none";
       document.getElementById("status").textContent = "";
     }
 
+    // Direct Exact String Display Function (No conversion lag)
     function formatISTDisplay(isoStr) {
       if (!isoStr) return "N/A";
-      const dt = new Date(isoStr);
-      if (isNaN(dt.getTime())) return isoStr;
-      const mm = String(dt.getMonth() + 1).padStart(2, '0');
-      const dd = String(dt.getDate()).padStart(2, '0');
-      const yyyy = dt.getFullYear();
-      const hh = String(dt.getHours()).padStart(2, '0');
-      const min = String(dt.getMinutes()).padStart(2, '0');
-      return `${mm}/${dd}/${yyyy}, ${hh}:${min}:00 IST`;
+      try {
+        const parts = isoStr.split("T");
+        if (parts.length < 2) return isoStr;
+        const dateParts = parts[0].split("-"); // YYYY, MM, DD
+        const timeParts = parts[1].split("+")[0]; // HH:MM:SS
+        return `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}, ${timeParts} IST`;
+      } catch (e) {
+        return isoStr;
+      }
     }
 
     async function fetchCurrentConfig() {
@@ -177,7 +177,7 @@
       const selectedId = document.getElementById("trainingSelect").value;
       const formUrl = document.getElementById("formUrl").value.trim();
       const pwd = document.getElementById("password").value.trim();
-      let expVal = document.getElementById("expiry").value;
+      const expVal = document.getElementById("expiry").value; // Format: YYYY-MM-DDTHH:MM
       const status = document.getElementById("status");
       const saveBtn = document.getElementById("saveBtn");
 
@@ -206,9 +206,8 @@
         return;
       }
 
-      let formattedExpiry = expVal;
-      if (formattedExpiry.length === 16) { formattedExpiry += ":00"; }
-      if (!formattedExpiry.includes('+') && !formattedExpiry.includes('Z')) { formattedExpiry += "+05:30"; }
+      // Exact ISO String construction without timezone shift
+      const formattedExpiry = `${expVal}:00+05:30`;
 
       localStorage.setItem("gh_pat", token);
       saveBtn.disabled = true;
@@ -266,12 +265,9 @@
           status.textContent = "✅ Config Successfully Updated!";
           status.className = "status success";
 
-          // Input values reset karna
           document.getElementById("formUrl").value = "";
           document.getElementById("password").value = "";
-          const expInput = document.getElementById("expiry");
-          expInput.value = "";
-          expInput.type = "text";
+          document.getElementById("expiry").value = "";
 
           fetchCurrentConfig();
         } else {
