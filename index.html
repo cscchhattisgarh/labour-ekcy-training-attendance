@@ -60,7 +60,7 @@
   <div class="container" id="passwordContainer">
     <div class="logo">📋</div>
     <h1>CSC VLE Attendance For</h1>
-    <h2>Labour eKYC Training</h2>
+    <h2 id="trainingTitle">Training Portal</h2>
     
     <div class="subtitle">
       Attendance Form खोलने के लिए<br>
@@ -98,12 +98,9 @@
   </div>
 
   <script>
-    // ================= CONFIGURATION =================
     const GITHUB_USERNAME = "cscchhattisgarh"; 
     const REPO_NAME = "labour-ekcy-training-attendance"; 
-    
     const CONFIG_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/config.json`;
-    // =================================================
 
     const passwordForm = document.getElementById("passwordForm");
     const passwordInput = document.getElementById("password");
@@ -129,6 +126,7 @@
         if (!res.ok) return null;
         return await res.json();
       } catch (e) {
+        console.error("Config Fetch Error:", e);
         return null;
       }
     }
@@ -145,30 +143,54 @@
       }
 
       verifyButton.disabled = true;
-      message.textContent = "Verifying Config...";
+      message.textContent = "Verifying Password...";
       message.className = "message loading";
 
       const config = await getConfig();
 
-      if (!config || !config.password || !config.form_url) {
+      if (!config) {
         verifyButton.disabled = false;
         message.textContent = "Config File Read Error! Admin se sampark karein.";
         message.className = "message error";
         return;
       }
 
-      // Check Expiry
+      let matchedTraining = null;
+
+      // Handle Array Format
+      if (config.trainings && Array.isArray(config.trainings)) {
+        matchedTraining = config.trainings.find(t => t.password === userPwd);
+      } 
+      // Handle Old Single Object Format (Backward Compatibility)
+      else if (config.password === userPwd) {
+        matchedTraining = {
+          name: "Training Portal",
+          password: config.password,
+          expiry: config.expiry,
+          form_url: config.form_url
+        };
+      }
+
+      if (!matchedTraining) {
+        verifyButton.disabled = false;
+        message.textContent = "गलत Password! सही Password दर्ज करें।";
+        message.className = "message error";
+        passwordInput.value = "";
+        updateMask(passwordInput);
+        passwordInput.focus();
+        return;
+      }
+
+      // Expiry Check
       const now = new Date();
-      let expiryStr = config.expiry;
-      
-      // Handle timezone string format
-      if (!expiryStr.includes('+') && !expiryStr.includes('Z')) {
+      let expiryStr = matchedTraining.expiry;
+      if (expiryStr && !expiryStr.includes('+') && !expiryStr.includes('Z')) {
         expiryStr += ":00+05:30";
       }
       
       const expiryTime = new Date(expiryStr);
 
-      if (now > expiryTime) {
+      if (isNaN(expiryTime.getTime()) || now > expiryTime) {
         verifyButton.disabled = false;
         message.textContent = "यह Training Password Expire हो चुका है!";
         message.className = "message error";
@@ -177,19 +199,11 @@
         return;
       }
 
-      if (userPwd === config.password) {
-        googleForm.src = config.form_url;
-        passwordContainer.style.display = "none";
-        formContainer.style.display = "block";
-        document.body.style.background = "#ffffff";
-      } else {
-        verifyButton.disabled = false;
-        message.textContent = "गलत Password! सही Password दर्ज करें।";
-        message.className = "message error";
-        passwordInput.value = "";
-        updateMask(passwordInput);
-        passwordInput.focus();
-      }
+      // Success - Load matched form
+      googleForm.src = matchedTraining.form_url;
+      passwordContainer.style.display = "none";
+      formContainer.style.display = "block";
+      document.body.style.background = "#ffffff";
     });
   </script>
 </body>
