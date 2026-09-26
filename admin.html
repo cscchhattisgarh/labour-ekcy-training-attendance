@@ -47,7 +47,6 @@
     const FILE_PATH = "config.json"; 
     // =================================================
 
-    // Local Storage se token auto-fill karne ke liye
     document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
 
     async function updateConfig() {
@@ -79,7 +78,6 @@
       try {
         const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
 
-        // Step 1: Current SHA fetch karein
         const getRes = await fetch(apiUrl, {
           headers: { "Authorization": `token ${token}` }
         });
@@ -90,7 +88,6 @@
           sha = getData.sha;
         }
 
-        // Step 2: Naya JSON payload banayein (form_url ke saath)
         const newConfig = {
           password: pwd,
           expiry: exp,
@@ -99,7 +96,6 @@
 
         const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(newConfig, null, 2))));
 
-        // Step 3: Commit updates
         const putRes = await fetch(apiUrl, {
           method: "PUT",
           headers: {
