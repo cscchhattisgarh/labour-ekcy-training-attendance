@@ -59,11 +59,9 @@
 
       <label for="startTime">Start Date & Time (IST): <span>*</span></label>
       <input type="datetime-local" id="startTime" disabled required>
-      <div class="note">Training start hone ka samay chunein</div>
 
       <label for="expiry">Expiry Date & Time (IST): <span>*</span></label>
       <input type="datetime-local" id="expiry" disabled required>
-      <div class="note">Training samapt hone ka samay chunein</div>
 
       <div class="btn-group">
         <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Current Settings</button>
@@ -100,7 +98,7 @@
       document.getElementById("fetchBtn").disabled = !isSelected;
       document.getElementById("saveBtn").disabled = !isSelected;
 
-      // Clear input fields by default
+      // Inputs default blank rakhein
       document.getElementById("password").value = "";
       document.getElementById("startTime").value = "";
       document.getElementById("expiry").value = "";
@@ -109,12 +107,10 @@
       document.getElementById("currentConfigBox").style.display = "none";
       document.getElementById("status").textContent = "";
 
-      // Auto Populate ONLY Google Form URL from GitHub config
+      // GitHub se Bina Cache ke ONLY Form Link Auto-populate karein
       if (isSelected) {
-        document.getElementById("status").textContent = "Fetching Form URL...";
-        document.getElementById("status").className = "status";
         try {
-          const res = await fetch(RAW_CONFIG_URL + '?_=' + Date.now());
+          const res = await fetch(RAW_CONFIG_URL + '?nocache=' + Date.now());
           if (res.ok) {
             const configData = await res.json();
             if (configData.trainings && Array.isArray(configData.trainings)) {
@@ -123,16 +119,15 @@
                 document.getElementById("formUrl").value = matched.form_url;
               }
             }
-            document.getElementById("status").textContent = "";
           }
         } catch (e) {
-          document.getElementById("status").textContent = "";
+          console.error("Auto populate fetch error", e);
         }
       }
     }
 
     function formatISTDisplay(isoStr) {
-      if (!isoStr) return "N/A";
+      if (!isoStr) return "Not Set";
       try {
         const parts = isoStr.split("T");
         if (parts.length < 2) return isoStr;
@@ -156,11 +151,12 @@
         return;
       }
 
-      status.textContent = "Fetching Live Config...";
+      status.textContent = "Fetching Fresh Live Config...";
       status.className = "status";
 
       try {
-        const res = await fetch(RAW_CONFIG_URL + '?_=' + Date.now());
+        // Cache bypass timestamp parameter
+        const res = await fetch(RAW_CONFIG_URL + '?nocache=' + Date.now());
         if (res.ok) {
           const configData = await res.json();
           let html = "";
@@ -250,7 +246,7 @@
 
       localStorage.setItem("gh_pat", token);
       saveBtn.disabled = true;
-      status.textContent = "Fetching existing data from GitHub...";
+      status.textContent = "Fetching existing repo data from GitHub...";
       status.className = "status";
 
       try {
@@ -305,11 +301,13 @@
           status.textContent = "✅ Config Successfully Updated!";
           status.className = "status success";
 
+          // Clear Password & Time inputs so new inputs can be entered
           document.getElementById("password").value = "";
           document.getElementById("startTime").value = "";
           document.getElementById("expiry").value = "";
 
-          fetchCurrentConfig();
+          // Fetch fresh settings instantly
+          setTimeout(fetchCurrentConfig, 1000);
         } else {
           const errData = await putRes.json();
           status.textContent = "❌ Error: " + (errData.message || "Failed to update");
