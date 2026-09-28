@@ -57,9 +57,13 @@
       <label for="password">New Password (6 Digits): <span>*</span></label>
       <input type="text" id="password" maxlength="6" pattern="\d{6}" placeholder="123456" disabled required>
 
-      <label for="expiry">Expiry Date & Time: <span>*</span></label>
+      <label for="startTime">Start Date & Time (IST): <span>*</span></label>
+      <input type="datetime-local" id="startTime" disabled required>
+      <div class="note">Training start hone ka samay chunein</div>
+
+      <label for="expiry">Expiry Date & Time (IST): <span>*</span></label>
       <input type="datetime-local" id="expiry" disabled required>
-      <div class="note">Select date and time in Indian Standard Time (IST)</div>
+      <div class="note">Training samapt hone ka samay chunein</div>
 
       <div class="btn-group">
         <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Current Settings</button>
@@ -78,35 +82,62 @@
   <script>
     // ================= CONFIGURATION =================
     const GITHUB_USERNAME = "cscchhattisgarh"; 
-    const REPO_NAME = "training-attendance"; 
+    const REPO_NAME = "labour-ekcy-training-attendance"; 
     const FILE_PATH = "config.json"; 
     const RAW_CONFIG_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/config.json`;
     // =================================================
 
     document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
 
-    function handleTrainingChange() {
+    async function handleTrainingChange() {
       const selectedValue = document.getElementById("trainingSelect").value;
       const isSelected = !!selectedValue;
 
       document.getElementById("formUrl").disabled = !isSelected;
       document.getElementById("password").disabled = !isSelected;
+      document.getElementById("startTime").disabled = !isSelected;
       document.getElementById("expiry").disabled = !isSelected;
       document.getElementById("fetchBtn").disabled = !isSelected;
       document.getElementById("saveBtn").disabled = !isSelected;
 
+      // Clear input fields by default
+      document.getElementById("password").value = "";
+      document.getElementById("startTime").value = "";
+      document.getElementById("expiry").value = "";
+      document.getElementById("formUrl").value = "";
+
       document.getElementById("currentConfigBox").style.display = "none";
       document.getElementById("status").textContent = "";
+
+      // Auto Populate ONLY Google Form URL from GitHub config
+      if (isSelected) {
+        document.getElementById("status").textContent = "Fetching Form URL...";
+        document.getElementById("status").className = "status";
+        try {
+          const res = await fetch(RAW_CONFIG_URL + '?_=' + Date.now());
+          if (res.ok) {
+            const configData = await res.json();
+            if (configData.trainings && Array.isArray(configData.trainings)) {
+              const matched = configData.trainings.find(t => t.id === selectedValue);
+              if (matched && matched.form_url) {
+                document.getElementById("formUrl").value = matched.form_url;
+              }
+            }
+            document.getElementById("status").textContent = "";
+          }
+        } catch (e) {
+          document.getElementById("status").textContent = "";
+        }
+      }
     }
 
-    // Direct Exact String Display Function (No conversion lag)
     function formatISTDisplay(isoStr) {
       if (!isoStr) return "N/A";
       try {
         const parts = isoStr.split("T");
         if (parts.length < 2) return isoStr;
-        const dateParts = parts[0].split("-"); // YYYY, MM, DD
-        const timeParts = parts[1].split("+")[0]; // HH:MM:SS
+        const dateParts = parts[0].split("-");
+        const timeParts = parts[1].split("+")[0];
         return `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}, ${timeParts} IST`;
       } catch (e) {
         return isoStr;
@@ -141,6 +172,7 @@
               html = `<div class="training-item">
                 <strong style="color:#0f766e;">📌 ${selectedTraining.name}:</strong><br>
                 <b>Password:</b> ${selectedTraining.password || 'Not Set'}<br>
+                <b>Start Time:</b> ${formatISTDisplay(selectedTraining.start_time)}<br>
                 <b>Expiry:</b> ${formatISTDisplay(selectedTraining.expiry)}<br>
                 <b>URL:</b> ${selectedTraining.form_url || 'Not Set'}
               </div>`;
@@ -177,7 +209,8 @@
       const selectedId = document.getElementById("trainingSelect").value;
       const formUrl = document.getElementById("formUrl").value.trim();
       const pwd = document.getElementById("password").value.trim();
-      const expVal = document.getElementById("expiry").value; // Format: YYYY-MM-DDTHH:MM
+      const startVal = document.getElementById("startTime").value;
+      const expVal = document.getElementById("expiry").value;
       const status = document.getElementById("status");
       const saveBtn = document.getElementById("saveBtn");
 
@@ -187,7 +220,7 @@
         return;
       }
 
-      if (!token || !formUrl || !pwd || !expVal) {
+      if (!token || !formUrl || !pwd || !startVal || !expVal) {
         status.textContent = "❌ Kripya sabhi mandatory fields bharein!";
         status.className = "status error";
         return;
@@ -206,8 +239,14 @@
         return;
       }
 
-      // Exact ISO String construction without timezone shift
+      const formattedStart = `${startVal}:00+05:30`;
       const formattedExpiry = `${expVal}:00+05:30`;
+
+      if (new Date(formattedStart) >= new Date(formattedExpiry)) {
+        status.textContent = "❌ Expiry Date/Time Start Date/Time ke baad ka hona chahiye!";
+        status.className = "status error";
+        return;
+      }
 
       localStorage.setItem("gh_pat", token);
       saveBtn.disabled = true;
@@ -233,14 +272,15 @@
 
         if (!existingConfig.trainings || !Array.isArray(existingConfig.trainings)) {
           existingConfig.trainings = [
-            { id: "labour_ekyc", name: "Labour eKYC Training", password: "", expiry: "", form_url: "" },
-            { id: "wifi_choupal", name: "WiFi Choupal Training", password: "", expiry: "", form_url: "" }
+            { id: "labour_ekyc", name: "Labour eKYC Training", password: "", start_time: "", expiry: "", form_url: "" },
+            { id: "wifi_choupal", name: "WiFi Choupal Training", password: "", start_time: "", expiry: "", form_url: "" }
           ];
         }
 
         let targetIndex = existingConfig.trainings.findIndex(t => t.id === selectedId);
         if (targetIndex !== -1) {
           existingConfig.trainings[targetIndex].password = pwd;
+          existingConfig.trainings[targetIndex].start_time = formattedStart;
           existingConfig.trainings[targetIndex].expiry = formattedExpiry;
           existingConfig.trainings[targetIndex].form_url = formUrl;
         }
@@ -265,8 +305,8 @@
           status.textContent = "✅ Config Successfully Updated!";
           status.className = "status success";
 
-          document.getElementById("formUrl").value = "";
           document.getElementById("password").value = "";
+          document.getElementById("startTime").value = "";
           document.getElementById("expiry").value = "";
 
           fetchCurrentConfig();
