@@ -99,7 +99,7 @@
 
   <script>
     const GITHUB_USERNAME = "cscchhattisgarh"; 
-    const REPO_NAME = "training-attendance"; 
+    const REPO_NAME = "labour-ekcy-training-attendance"; 
     const CONFIG_RAW_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/config.json`;
 
     const passwordForm = document.getElementById("passwordForm");
@@ -157,15 +157,13 @@
 
       let matchedTraining = null;
 
-      // Handle Array Format
       if (config.trainings && Array.isArray(config.trainings)) {
         matchedTraining = config.trainings.find(t => t.password === userPwd);
-      } 
-      // Handle Old Single Object Format (Backward Compatibility)
-      else if (config.password === userPwd) {
+      } else if (config.password === userPwd) {
         matchedTraining = {
           name: "Training Portal",
           password: config.password,
+          start_time: config.start_time,
           expiry: config.expiry,
           form_url: config.form_url
         };
@@ -181,25 +179,43 @@
         return;
       }
 
-      // Expiry Check
       const now = new Date();
-      let expiryStr = matchedTraining.expiry;
-      if (expiryStr && !expiryStr.includes('+') && !expiryStr.includes('Z')) {
-        expiryStr += ":00+05:30";
-      }
-      
-      const expiryTime = new Date(expiryStr);
 
-      if (isNaN(expiryTime.getTime()) || now > expiryTime) {
-        verifyButton.disabled = false;
-        message.textContent = "यह Training Password Expire हो चुका है!";
-        message.className = "message error";
-        passwordInput.value = "";
-        updateMask(passwordInput);
-        return;
+      // 1. Start Time Check
+      if (matchedTraining.start_time) {
+        let startStr = matchedTraining.start_time;
+        if (!startStr.includes('+') && !startStr.includes('Z')) {
+          startStr += ":00+05:30";
+        }
+        const startTime = new Date(startStr);
+        if (now < startTime) {
+          verifyButton.disabled = false;
+          message.textContent = "यह Training अभी शुरू नहीं हुई है!";
+          message.className = "message error";
+          passwordInput.value = "";
+          updateMask(passwordInput);
+          return;
+        }
       }
 
-      // Success - Load matched form
+      // 2. Expiry Time Check
+      if (matchedTraining.expiry) {
+        let expiryStr = matchedTraining.expiry;
+        if (!expiryStr.includes('+') && !expiryStr.includes('Z')) {
+          expiryStr += ":00+05:30";
+        }
+        const expiryTime = new Date(expiryStr);
+        if (isNaN(expiryTime.getTime()) || now > expiryTime) {
+          verifyButton.disabled = false;
+          message.textContent = "यह Training Password Expire हो चुका है!";
+          message.className = "message error";
+          passwordInput.value = "";
+          updateMask(passwordInput);
+          return;
+        }
+      }
+
+      // Success
       googleForm.src = matchedTraining.form_url;
       passwordContainer.style.display = "none";
       formContainer.style.display = "block";
