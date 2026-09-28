@@ -3,16 +3,18 @@
     {
       "id": "labour_ekyc",
       "name": "Labour eKYC Training",
-      "password": "789098",
-      "expiry": "2026-09-26T17:35:00+05:30",
+      "password": "909090",
+      "start_time": "2026-09-26T10:00:00+05:30",
+      "expiry": "2026-09-26T17:10:00+05:30",
       "form_url": "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true"
     },
     {
       "id": "wifi_choupal",
       "name": "WiFi Choupal Training",
-      "password": "901030",
-      "expiry": "2026-09-26T19:00:00+05:30",
-      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdTuFGRAEfMzaT7lTfOzEuU4TtkGmr5Rc_aMaX4UobAhEeizw/viewform?embedded=true"
+      "password": "",
+      "start_time": "",
+      "expiry": "",
+      "form_url": ""
     }
   ]
 }
