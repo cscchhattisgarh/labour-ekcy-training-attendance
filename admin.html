@@ -58,10 +58,12 @@
       <input type="text" id="password" maxlength="6" pattern="\d{6}" placeholder="123456" disabled required>
 
       <label for="startTime">Start Date & Time (IST): <span>*</span></label>
-      <input type="datetime-local" id="startTime" disabled required>
+      <input type="datetime-local" id="startTime" onchange="handleStartTimeChange()" disabled required>
+      <div class="note">Abhi ke samay ke baad ka samay chunein</div>
 
       <label for="expiry">Expiry Date & Time (IST): <span>*</span></label>
       <input type="datetime-local" id="expiry" disabled required>
+      <div class="note">Start Time ke baad ka samay chunein</div>
 
       <div class="btn-group">
         <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Current Settings</button>
@@ -82,37 +84,61 @@
     const GITHUB_USERNAME = "cscchhattisgarh"; 
     const REPO_NAME = "labour-ekcy-training-attendance"; 
     const FILE_PATH = "config.json"; 
-    const RAW_CONFIG_URL = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${REPO_NAME}/main/config.json`;
+    const API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
     // =================================================
 
     document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
+
+    // Current time formatted for datetime-local (YYYY-MM-DDTHH:MM)
+    function getCurrentDateTimeLocal() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 
     async function handleTrainingChange() {
       const selectedValue = document.getElementById("trainingSelect").value;
       const isSelected = !!selectedValue;
 
+      const startTimeInput = document.getElementById("startTime");
+      const expiryInput = document.getElementById("expiry");
+
       document.getElementById("formUrl").disabled = !isSelected;
       document.getElementById("password").disabled = !isSelected;
-      document.getElementById("startTime").disabled = !isSelected;
-      document.getElementById("expiry").disabled = !isSelected;
+      startTimeInput.disabled = !isSelected;
+      expiryInput.disabled = !isSelected;
       document.getElementById("fetchBtn").disabled = !isSelected;
       document.getElementById("saveBtn").disabled = !isSelected;
 
       // Inputs default blank rakhein
       document.getElementById("password").value = "";
-      document.getElementById("startTime").value = "";
-      document.getElementById("expiry").value = "";
+      startTimeInput.value = "";
+      expiryInput.value = "";
       document.getElementById("formUrl").value = "";
+
+      // Min constraint: Start time current time se pehle ka na ho
+      const nowFormatted = getCurrentDateTimeLocal();
+      startTimeInput.min = nowFormatted;
+      expiryInput.min = nowFormatted;
 
       document.getElementById("currentConfigBox").style.display = "none";
       document.getElementById("status").textContent = "";
 
-      // GitHub se Bina Cache ke ONLY Form Link Auto-populate karein
+      // Auto-populate Form URL
       if (isSelected) {
+        const token = document.getElementById("token").value.trim();
+        const headers = token ? { "Authorization": `token ${token}` } : {};
         try {
-          const res = await fetch(RAW_CONFIG_URL + '?nocache=' + Date.now());
+          const res = await fetch(API_URL + '?_=' + Date.now(), { headers });
           if (res.ok) {
-            const configData = await res.json();
+            const data = await res.json();
+            const decodedText = decodeURIComponent(escape(atob(data.content)));
+            const configData = JSON.parse(decodedText);
+            
             if (configData.trainings && Array.isArray(configData.trainings)) {
               const matched = configData.trainings.find(t => t.id === selectedValue);
               if (matched && matched.form_url) {
@@ -121,7 +147,19 @@
             }
           }
         } catch (e) {
-          console.error("Auto populate fetch error", e);
+          console.error("Auto populate error", e);
+        }
+      }
+    }
+
+    // Dynamic min update for Expiry Input based on Start Time selection
+    function handleStartTimeChange() {
+      const startVal = document.getElementById("startTime").value;
+      const expiryInput = document.getElementById("expiry");
+      if (startVal) {
+        expiryInput.min = startVal;
+        if (expiryInput.value && expiryInput.value <= startVal) {
+          expiryInput.value = "";
         }
       }
     }
@@ -141,6 +179,7 @@
 
     async function fetchCurrentConfig() {
       const selectedId = document.getElementById("trainingSelect").value;
+      const token = document.getElementById("token").value.trim();
       const status = document.getElementById("status");
       const box = document.getElementById("currentConfigBox");
       const liveContent = document.getElementById("liveContent");
@@ -151,16 +190,19 @@
         return;
       }
 
-      status.textContent = "Fetching Fresh Live Config...";
+      status.textContent = "Fetching Live Config...";
       status.className = "status";
 
       try {
-        // Cache bypass timestamp parameter
-        const res = await fetch(RAW_CONFIG_URL + '?nocache=' + Date.now());
+        const headers = token ? { "Authorization": `token ${token}` } : {};
+        const res = await fetch(API_URL + '?_=' + Date.now(), { headers });
+
         if (res.ok) {
-          const configData = await res.json();
+          const getData = await res.json();
+          const decodedText = decodeURIComponent(escape(atob(getData.content)));
+          const configData = JSON.parse(decodedText);
+
           let html = "";
-          
           if (configData.trainings && Array.isArray(configData.trainings)) {
             const selectedTraining = configData.trainings.find(t => t.id === selectedId);
             
@@ -181,7 +223,7 @@
           status.textContent = "✅ Active settings fetched!";
           status.className = "status success";
         } else {
-          status.textContent = "❌ Error fetching live config file!";
+          status.textContent = "❌ Error fetching live config file from API!";
           status.className = "status error";
         }
       } catch (e) {
@@ -192,10 +234,10 @@
 
     function isValidGoogleFormEmbedUrl(urlStr) {
       if (!urlStr.includes("docs.google.com/forms")) {
-        return { valid: false, reason: "Yeh Google Form ki link nahi hai! (Must contain 'docs.google.com/forms')" };
+        return { valid: false, reason: "Yeh Google Form ki link nahi hai!" };
       }
       if (!urlStr.includes("embedded=true")) {
-        return { valid: false, reason: "Yeh Google Form ki Embed Link nahi hai! URL ke aakhri me '?embedded=true' zaroor hona chahiye." };
+        return { valid: false, reason: "URL ke aakhri me '?embedded=true' zaroor hona chahiye." };
       }
       return { valid: true };
     }
@@ -235,10 +277,22 @@
         return;
       }
 
+      // Time Strict Validation Logic
+      const now = new Date();
       const formattedStart = `${startVal}:00+05:30`;
       const formattedExpiry = `${expVal}:00+05:30`;
+      const startDateObj = new Date(formattedStart);
+      const expiryDateObj = new Date(formattedExpiry);
 
-      if (new Date(formattedStart) >= new Date(formattedExpiry)) {
+      // Check 1: Start Time future ka hona chahiye
+      if (startDateObj < now) {
+        status.textContent = "❌ Start Date & Time abhi ke time ke baad ka hona chahiye!";
+        status.className = "status error";
+        return;
+      }
+
+      // Check 2: Expiry Time Start Time ke baad ka hona chahiye
+      if (startDateObj >= expiryDateObj) {
         status.textContent = "❌ Expiry Date/Time Start Date/Time ke baad ka hona chahiye!";
         status.className = "status error";
         return;
@@ -246,13 +300,11 @@
 
       localStorage.setItem("gh_pat", token);
       saveBtn.disabled = true;
-      status.textContent = "Fetching existing repo data from GitHub...";
+      status.textContent = "Fetching current SHA from GitHub API...";
       status.className = "status";
 
       try {
-        const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
-
-        const getRes = await fetch(apiUrl, {
+        const getRes = await fetch(API_URL, {
           headers: { "Authorization": `token ${token}` }
         });
 
@@ -284,7 +336,7 @@
         const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(existingConfig, null, 2))));
 
         status.textContent = "Updating GitHub Repository...";
-        const putRes = await fetch(apiUrl, {
+        const putRes = await fetch(API_URL, {
           method: "PUT",
           headers: {
             "Authorization": `token ${token}`,
@@ -301,13 +353,11 @@
           status.textContent = "✅ Config Successfully Updated!";
           status.className = "status success";
 
-          // Clear Password & Time inputs so new inputs can be entered
           document.getElementById("password").value = "";
           document.getElementById("startTime").value = "";
           document.getElementById("expiry").value = "";
 
-          // Fetch fresh settings instantly
-          setTimeout(fetchCurrentConfig, 1000);
+          fetchCurrentConfig();
         } else {
           const errData = await putRes.json();
           status.textContent = "❌ Error: " + (errData.message || "Failed to update");
