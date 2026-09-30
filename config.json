@@ -11,10 +11,10 @@
     {
       "id": "wifi_choupal",
       "name": "WiFi Choupal Training",
-      "password": "",
-      "start_time": "",
-      "expiry": "",
-      "form_url": ""
+      "password": "092026",
+      "start_time": "2026-09-30T18:00:00+05:30",
+      "expiry": "2026-09-30T20:00:00+05:30",
+      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdTuFGRAEfMzaT7lTfOzEuU4TtkGmr5Rc_aMaX4UobAhEeizw/viewform?embedded=true"
     }
   ]
 }
