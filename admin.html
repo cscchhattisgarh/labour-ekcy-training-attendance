@@ -63,7 +63,7 @@
 
       <label for="formUrl">Google Form Embed URL: <span>*</span></label>
       <input type="url" id="formUrl" placeholder="https://docs.google.com/forms/d/e/.../viewform?embedded=true" disabled required>
-      <div class="note">Topic select karte hi default URL automatic aa jayega. Link me 'embedded=true' hona chahiye.</div>
+      <div class="note">Naya Google Form Link paste kar sakte hain. URL me '?embedded=true' zaroor hona chahiye.</div>
 
       <label for="password">New Password (6 Digits): <span>*</span></label>
       <input type="text" id="password" maxlength="6" pattern="\d{6}" placeholder="123456" disabled required>
@@ -75,7 +75,7 @@
       <input type="datetime-local" id="expiry" disabled required>
 
       <div class="btn-group">
-        <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Active Sessions</button>
+        <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()">🔍 View Active Sessions</button>
         <button type="submit" class="btn-save" id="saveBtn" disabled>💾 Save & Deploy</button>
       </div>
     </form>
@@ -93,6 +93,8 @@
     const REPO_NAME = "labour-ekcy-training-attendance"; 
     const FILE_PATH = "config.json"; 
     const API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
+
+    let cachedConfig = null;
 
     // UTF-8 Helpers for Base64 (Safe for Hindi & special characters)
     function utf8ToBase64(str) {
@@ -112,12 +114,6 @@
       }
       return new TextDecoder().decode(bytes);
     }
-
-    // Topic wise Default Google Form URLs Mapping
-    const DEFAULT_FORM_URLS = {
-      "labour_ekyc": "https://docs.google.com/forms/d/e/1FAIpQLSdJ3iXm302K-I1qNsnS5I6m1s1bB8iA1B_e-sample1/viewform?embedded=true",
-      "wifi_choupal": "https://docs.google.com/forms/d/e/1FAIpQLSdJ3iXm302K-I1qNsnS5I6m1s1bB8iA1B_e-sample2/viewform?embedded=true"
-    };
 
     document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
 
@@ -142,15 +138,20 @@
       const startTimeInput = document.getElementById("startTime");
       const expiryInput = document.getElementById("expiry");
 
-      if (topic && DEFAULT_FORM_URLS[topic]) {
-        formUrlInput.value = DEFAULT_FORM_URLS[topic];
+      // Fetch latest config if not cached to auto-populate existing form URL
+      if (topic) {
+        if (!cachedConfig) {
+          await fetchCurrentConfig(true); // Silent fetch
+        }
+        if (cachedConfig && cachedConfig.topics && cachedConfig.topics[topic] && cachedConfig.topics[topic].form_url) {
+          formUrlInput.value = cachedConfig.topics[topic].form_url;
+        }
       }
 
       formUrlInput.disabled = !isSelected;
       document.getElementById("password").disabled = !isSelected;
       startTimeInput.disabled = !isSelected;
       expiryInput.disabled = !isSelected;
-      document.getElementById("fetchBtn").disabled = !isSelected;
       document.getElementById("saveBtn").disabled = !isSelected;
 
       const nowFormatted = getCurrentDateTimeLocal();
@@ -180,14 +181,16 @@
       } catch (e) { return isoStr; }
     }
 
-    async function fetchCurrentConfig() {
+    async function fetchCurrentConfig(silent = false) {
       const token = document.getElementById("token").value.trim();
       const status = document.getElementById("status");
       const box = document.getElementById("currentConfigBox");
       const liveContent = document.getElementById("liveContent");
 
-      status.textContent = "Fetching Live Config...";
-      status.className = "status";
+      if (!silent) {
+        status.textContent = "Fetching Live Config...";
+        status.className = "status";
+      }
 
       try {
         const headers = token ? { "Authorization": `token ${token}` } : {};
@@ -196,32 +199,36 @@
         if (res.ok) {
           const getData = await res.json();
           const decodedText = base64ToUtf8(getData.content);
-          const configData = JSON.parse(decodedText);
+          cachedConfig = JSON.parse(decodedText);
 
-          let html = "";
-          if (configData.trainings && Array.isArray(configData.trainings) && configData.trainings.length > 0) {
-            configData.trainings.forEach(t => {
-              html += `<div class="training-item">
-                <strong style="color:#0f766e;">📌 ${t.name || t.id}:</strong><br>
-                <b>Password:</b> ${t.password || 'N/A'}<br>
-                <b>Start:</b> ${formatISTDisplay(t.start_time)}<br>
-                <b>Expiry:</b> ${formatISTDisplay(t.expiry)}
-              </div>`;
-            });
-          } else {
-            html = "<div>No active sessions found.</div>";
+          if (!silent) {
+            let html = "";
+            if (cachedConfig.trainings && Array.isArray(cachedConfig.trainings) && cachedConfig.trainings.length > 0) {
+              cachedConfig.trainings.forEach(t => {
+                html += `<div class="training-item">
+                  <strong style="color:#0f766e;">📌 ${t.name || t.id}:</strong><br>
+                  <b>Password:</b> ${t.password || 'N/A'}<br>
+                  <b>Start:</b> ${formatISTDisplay(t.start_time)}<br>
+                  <b>Expiry:</b> ${formatISTDisplay(t.expiry)}
+                </div>`;
+              });
+            } else {
+              html = "<div>No active sessions found.</div>";
+            }
+            liveContent.innerHTML = html;
+            box.style.display = "block";
+            status.textContent = "✅ Active sessions fetched!";
+            status.className = "status success";
           }
-          liveContent.innerHTML = html;
-          box.style.display = "block";
-          status.textContent = "✅ Active sessions fetched!";
-          status.className = "status success";
-        } else {
+        } else if (!silent) {
           status.textContent = "❌ Error fetching live config file! Check Token or Permissions.";
           status.className = "status error";
         }
       } catch (e) {
-        status.textContent = "❌ Network Error!";
-        status.className = "status error";
+        if (!silent) {
+          status.textContent = "❌ Network Error!";
+          status.className = "status error";
+        }
       }
     }
 
@@ -237,6 +244,7 @@
 
     async function updateConfig() {
       const token = document.getElementById("token").value.trim();
+      const topicValue = document.getElementById("trainingSelect").value;
       const uniqueId = generateUniqueId();
       const topicText = document.getElementById("trainingSelect").options[document.getElementById("trainingSelect").selectedIndex].text;
       const trainerText = document.getElementById("trainerSelect").options[document.getElementById("trainerSelect").selectedIndex].text;
@@ -271,7 +279,7 @@
       const formattedStart = `${startVal}:00+05:30`;
       const formattedExpiry = `${expVal}:00+05:30`;
 
-      // 2-minute grace buffer so user current minute input doesn't fail immediately
+      // 2-minute grace buffer
       const nowBuffer = new Date(Date.now() - 2 * 60 * 1000);
       if (new Date(formattedStart) < nowBuffer) {
         status.textContent = "❌ Start Date & Time aane wale samay ka hona chahiye!";
@@ -292,7 +300,7 @@
       try {
         const getRes = await fetch(API_URL, { headers: { "Authorization": `token ${token}` } });
         let sha = "";
-        let existingConfig = { trainings: [] };
+        let existingConfig = { topics: {}, trainings: [] };
 
         if (getRes.ok) {
           const getData = await getRes.json();
@@ -300,13 +308,22 @@
           existingConfig = JSON.parse(base64ToUtf8(getData.content));
         }
 
+        if (!existingConfig.topics) existingConfig.topics = {};
         if (!existingConfig.trainings || !Array.isArray(existingConfig.trainings)) {
           existingConfig.trainings = [];
         }
 
+        // Update Topic Google Form URL in topics list as well
+        existingConfig.topics[topicValue] = {
+          title: topicText,
+          form_url: formUrl
+        };
+
+        // Unique Session Entry
         let targetIndex = existingConfig.trainings.findIndex(t => t.id === uniqueId);
         const newEntry = {
           id: uniqueId,
+          topic_id: topicValue,
           name: sessionName,
           password: pwd,
           start_time: formattedStart,
