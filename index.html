@@ -111,6 +111,15 @@
     const formContainer = document.getElementById("formContainer");
     const googleForm = document.getElementById("googleForm");
 
+    function base64ToUtf8(str) {
+      const binary = atob(str.replace(/\s/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new TextDecoder().decode(bytes);
+    }
+
     function updateMask(input) {
       input.value = input.value.replace(/[^0-9]/g, '');
       const len = input.value.length;
@@ -123,11 +132,10 @@
 
     async function getConfig() {
       try {
-        // Fetch direct via GitHub API to prevent cache delays
         const res = await fetch(API_URL + '?_=' + Date.now());
         if (!res.ok) return null;
         const data = await res.json();
-        const decodedText = decodeURIComponent(escape(atob(data.content)));
+        const decodedText = base64ToUtf8(data.content);
         return JSON.parse(decodedText);
       } catch (e) {
         console.error("Config Fetch Error:", e);
@@ -138,7 +146,6 @@
     function parseISODate(dateStr) {
       if (!dateStr) return null;
       let cleanStr = dateStr.trim();
-      // Only append offset if timezone info (+ or Z) is missing
       if (!cleanStr.includes('+') && !cleanStr.includes('Z')) {
         cleanStr += ":00+05:30";
       }
@@ -169,21 +176,21 @@
         return;
       }
 
-      let matchedTraining = null;
+      let matchingSessions = [];
 
       if (config.trainings && Array.isArray(config.trainings)) {
-        matchedTraining = config.trainings.find(t => String(t.password).trim() === userPwd);
+        matchingSessions = config.trainings.filter(t => String(t.password).trim() === userPwd);
       } else if (String(config.password).trim() === userPwd) {
-        matchedTraining = {
+        matchingSessions = [{
           name: "Training Portal",
           password: config.password,
           start_time: config.start_time,
           expiry: config.expiry,
           form_url: config.form_url
-        };
+        }];
       }
 
-      if (!matchedTraining) {
+      if (matchingSessions.length === 0) {
         verifyButton.disabled = false;
         message.textContent = "गलत Password! सही Password दर्ज करें।";
         message.className = "message error";
@@ -194,35 +201,43 @@
       }
 
       const now = new Date();
+      let activeSession = null;
+      let isNotStartedYet = false;
+      let isExpired = false;
 
-      // 1. Start Time Check
-      if (matchedTraining.start_time) {
-        const startTime = parseISODate(matchedTraining.start_time);
+      for (const session of matchingSessions) {
+        const startTime = parseISODate(session.start_time);
+        const expiryTime = parseISODate(session.expiry);
+
         if (startTime && now < startTime) {
-          verifyButton.disabled = false;
-          message.textContent = "यह Training अभी शुरू नहीं हुई है!";
-          message.className = "message error";
-          passwordInput.value = "";
-          updateMask(passwordInput);
-          return;
+          isNotStartedYet = true;
+          continue;
         }
+
+        if (expiryTime && (isNaN(expiryTime.getTime()) || now > expiryTime)) {
+          isExpired = true;
+          continue;
+        }
+
+        activeSession = session;
+        break;
       }
 
-      // 2. Expiry Time Check
-      if (matchedTraining.expiry) {
-        const expiryTime = parseISODate(matchedTraining.expiry);
-        if (expiryTime && (isNaN(expiryTime.getTime()) || now > expiryTime)) {
-          verifyButton.disabled = false;
+      if (!activeSession) {
+        verifyButton.disabled = false;
+        if (isNotStartedYet && !isExpired) {
+          message.textContent = "यह Training अभी शुरू नहीं हुई है!";
+        } else {
           message.textContent = "यह Training Password Expire हो चुका है!";
-          message.className = "message error";
-          passwordInput.value = "";
-          updateMask(passwordInput);
-          return;
         }
+        message.className = "message error";
+        passwordInput.value = "";
+        updateMask(passwordInput);
+        return;
       }
 
       // Success
-      googleForm.src = matchedTraining.form_url;
+      googleForm.src = activeSession.form_url;
       passwordContainer.style.display = "none";
       formContainer.style.display = "block";
       document.body.style.background = "#ffffff";
