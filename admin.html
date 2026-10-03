@@ -28,9 +28,14 @@
     .current-box {
       margin-top: 20px; padding: 15px; background: #f1f5f9; border-left: 4px solid #0f766e;
       border-radius: 6px; font-size: 13px; color: #1e293b; display: none; word-break: break-all;
-      max-height: 250px; overflow-y: auto;
+      max-height: 280px; overflow-y: auto;
     }
     .current-box h4 { margin: 0 0 10px 0; color: #0f766e; font-size: 14px; }
+    .vle-link-box {
+      background: #e0f2fe; border: 1px solid #bae6fd; padding: 8px 10px;
+      border-radius: 6px; margin-bottom: 12px; font-size: 13px; color: #0369a1;
+    }
+    .vle-link-box a { color: #2563eb; font-weight: bold; text-decoration: underline; }
     .training-item { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #cbd5e1; }
     .note { font-size: 11px; color: #64748b; margin-top: 4px; }
   </style>
@@ -41,7 +46,7 @@
     <h2>⚙️ CSC Attendance Admin Panel</h2>
 
     <form id="adminForm" onsubmit="event.preventDefault(); updateConfig();">
-      <label for="token">Personal Access Token (PAT): <span>*</span></label>
+      <label for="token">GitHub Personal Access Token (PAT): <span>*</span></label>
       <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" required>
 
       <label for="trainingSelect">Select Training Topic: <span>*</span></label>
@@ -96,7 +101,6 @@
 
     let cachedConfig = null;
 
-    // UTF-8 Helpers for Base64 (Safe for Hindi & special characters)
     function utf8ToBase64(str) {
       const bytes = new TextEncoder().encode(str);
       let binary = '';
@@ -138,10 +142,9 @@
       const startTimeInput = document.getElementById("startTime");
       const expiryInput = document.getElementById("expiry");
 
-      // Fetch latest config if not cached to auto-populate existing form URL
       if (topic) {
         if (!cachedConfig) {
-          await fetchCurrentConfig(true); // Silent fetch
+          await fetchCurrentConfig(true);
         }
         if (cachedConfig && cachedConfig.topics && cachedConfig.topics[topic] && cachedConfig.topics[topic].form_url) {
           formUrlInput.value = cachedConfig.topics[topic].form_url;
@@ -202,7 +205,14 @@
           cachedConfig = JSON.parse(decodedText);
 
           if (!silent) {
-            let html = "";
+            // Sabse pehle line me VLE attendance link add kiya gaya hai
+            let html = `<div class="vle-link-box">
+              🔗 <b>Attendance Link for VLEs:</b><br>
+              <a href="https://cscchhattisgarh.github.io/training-attendance/" target="_blank">
+                https://cscchhattisgarh.github.io/training-attendance/
+              </a>
+            </div>`;
+
             if (cachedConfig.trainings && Array.isArray(cachedConfig.trainings) && cachedConfig.trainings.length > 0) {
               cachedConfig.trainings.forEach(t => {
                 html += `<div class="training-item">
@@ -213,7 +223,7 @@
                 </div>`;
               });
             } else {
-              html = "<div>No active sessions found.</div>";
+              html += "<div>No active sessions found.</div>";
             }
             liveContent.innerHTML = html;
             box.style.display = "block";
@@ -279,7 +289,6 @@
       const formattedStart = `${startVal}:00+05:30`;
       const formattedExpiry = `${expVal}:00+05:30`;
 
-      // 2-minute grace buffer
       const nowBuffer = new Date(Date.now() - 2 * 60 * 1000);
       if (new Date(formattedStart) < nowBuffer) {
         status.textContent = "❌ Start Date & Time aane wale samay ka hona chahiye!";
@@ -313,13 +322,11 @@
           existingConfig.trainings = [];
         }
 
-        // Update Topic Google Form URL in topics list as well
         existingConfig.topics[topicValue] = {
           title: topicText,
           form_url: formUrl
         };
 
-        // Unique Session Entry
         let targetIndex = existingConfig.trainings.findIndex(t => t.id === uniqueId);
         const newEntry = {
           id: uniqueId,
