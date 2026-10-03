@@ -1,16 +1,16 @@
 {
   "trainings": [
     {
-      "id": "labour_ekyc",
-      "name": "Labour eKYC Training",
+      "id": "labour_ekyc_ramesh",
+      "name": "Labour eKYC Training (Trainer Ramesh)",
       "password": "395049",
       "start_time": "2026-10-01T13:43:00+05:30",
       "expiry": "2026-10-01T14:05:00+05:30",
       "form_url": "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true"
     },
     {
-      "id": "wifi_choupal",
-      "name": "WiFi Choupal Training",
+      "id": "wifi_choupal_suresh",
+      "name": "WiFi Choupal Training (Trainer Suresh)",
       "password": "994490",
       "start_time": "2026-10-03T12:51:00+05:30",
       "expiry": "2026-10-03T13:05:00+05:30",
