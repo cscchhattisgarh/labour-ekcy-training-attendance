@@ -2,37 +2,12 @@
   "topics": {
     "labour_ekyc": {
       "title": "Labour eKYC Training",
-      "default_form_url": "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true"
+      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true"
     },
     "wifi_choupal": {
       "title": "WiFi Choupal Training",
-      "default_form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdTuFGRAEfMzaT7lTfOzEuU4TtkGmr5Rc_aMaX4UobAhEeizw/viewform?embedded=true"
+      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdTuFGRAEfMzaT7lTfOzEuU4TtkGmr5Rc_aMaX4UobAhEeizw/viewform?embedded=true"
     }
   },
-  "trainings": [
-    {
-      "id": "labour_ekyc_neeraj_hardev",
-      "name": "Labour eKYC Training (Neeraj Hardev)",
-      "password": "395049",
-      "start_time": "2026-10-03T13:43:00+05:30",
-      "expiry": "2026-10-03T18:00:00+05:30",
-      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLScpS9pya78KOmWDe4LPx2yXK4kYUnUF60j6q5yIhElBKbbA0Q/viewform?embedded=true"
-    },
-    {
-      "id": "wifi_choupal_pushpen_kumar_verma",
-      "name": "WiFi Choupal Training (Pushpen Kumar Verma)",
-      "password": "994490",
-      "start_time": "2026-10-03T12:51:00+05:30",
-      "expiry": "2026-10-03T18:00:00+05:30",
-      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdTuFGRAEfMzaT7lTfOzEuU4TtkGmr5Rc_aMaX4UobAhEeizw/viewform?embedded=true"
-    },
-    {
-      "id": "wifi_choupal_neeraj_hardev",
-      "name": "WiFi Choupal Training (Neeraj Hardev)",
-      "password": "348921",
-      "start_time": "2026-10-03T14:04:00+05:30",
-      "expiry": "2026-10-03T14:06:00+05:30",
-      "form_url": "https://docs.google.com/forms/d/e/1FAIpQLSdJ3iXm302K-I1qNsnS5I6m1s1bB8iA1B_e-sample2/viewform?embedded=true"
-    }
-  ]
+  "trainings": []
 }
