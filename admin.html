@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance Admin Panel</title>
+  <title>Attendance Admin Panel - Dynamic Sessions</title>
   <style>
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+    .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 520px; }
     h2 { margin-top: 0; color: #1e293b; text-align: center; }
     label { font-weight: bold; font-size: 14px; color: #334155; display: block; margin: 15px 0 5px; }
     label span { color: #dc2626; }
@@ -28,45 +28,54 @@
     .current-box {
       margin-top: 20px; padding: 15px; background: #f1f5f9; border-left: 4px solid #0f766e;
       border-radius: 6px; font-size: 13px; color: #1e293b; display: none; word-break: break-all;
+      max-height: 250px; overflow-y: auto;
     }
     .current-box h4 { margin: 0 0 10px 0; color: #0f766e; font-size: 14px; }
-    .training-item { margin-bottom: 0; padding-bottom: 0; }
+    .training-item { margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #cbd5e1; }
     .note { font-size: 11px; color: #64748b; margin-top: 4px; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>⚙️ CSC Attendance Admin</h2>
+    <h2>⚙️ CSC Attendance Admin Panel</h2>
 
     <form id="adminForm" onsubmit="event.preventDefault(); updateConfig();">
       <label for="token">GitHub Personal Access Token (PAT): <span>*</span></label>
       <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx" required>
 
-      <label for="trainingSelect">Select Training: <span>*</span></label>
-      <select id="trainingSelect" onchange="handleTrainingChange()" required>
-        <option value="" disabled selected>-- Select Training --</option>
-        <option value="labour_ekyc">1. Labour eKYC Training</option>
-        <option value="wifi_choupal">2. WiFi Choupal Training</option>
+      <label for="trainingSelect">Select Training Topic: <span>*</span></label>
+      <select id="trainingSelect" onchange="handleSelectionChange()" required>
+        <option value="" disabled selected>-- Select Topic --</option>
+        <option value="labour_ekyc">Labour eKYC Training</option>
+        <option value="wifi_choupal">WiFi Choupal Training</option>
+      </select>
+
+      <label for="trainerSelect">Select Trainer: <span>*</span></label>
+      <select id="trainerSelect" onchange="handleSelectionChange()" required>
+        <option value="" disabled selected>-- Select Trainer --</option>
+        <option value="neeraj_hardev">Neeraj Hardev</option>
+        <option value="pushpen_kumar_verma">Pushpen Kumar Verma</option>
+        <option value="krishnandan_kumar">Krishnandan Kumar</option>
+        <option value="neeta_sahu">Neeta Sahu</option>
+        <option value="suruchi_shesh">Suruchi Shesh</option>
       </select>
 
       <label for="formUrl">Google Form Embed URL: <span>*</span></label>
       <input type="url" id="formUrl" placeholder="https://docs.google.com/forms/d/e/.../viewform?embedded=true" disabled required>
-      <div class="note">Link must contain 'docs.google.com/forms' and 'embedded=true'</div>
+      <div class="note">Topic select karte hi default URL automatic aa jayega. Link me 'embedded=true' hona chahiye.</div>
 
       <label for="password">New Password (6 Digits): <span>*</span></label>
       <input type="text" id="password" maxlength="6" pattern="\d{6}" placeholder="123456" disabled required>
 
       <label for="startTime">Start Date & Time (IST): <span>*</span></label>
       <input type="datetime-local" id="startTime" onchange="handleStartTimeChange()" disabled required>
-      <div class="note">Abhi ke samay ke baad ka samay chunein</div>
 
       <label for="expiry">Expiry Date & Time (IST): <span>*</span></label>
       <input type="datetime-local" id="expiry" disabled required>
-      <div class="note">Start Time ke baad ka samay chunein</div>
 
       <div class="btn-group">
-        <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Current Settings</button>
+        <button type="button" class="btn-fetch" id="fetchBtn" onclick="fetchCurrentConfig()" disabled>🔍 View Active Sessions</button>
         <button type="submit" class="btn-save" id="saveBtn" disabled>💾 Save & Deploy</button>
       </div>
     </form>
@@ -74,85 +83,81 @@
     <div id="status" class="status"></div>
 
     <div id="currentConfigBox" class="current-box">
-      <h4>📌 Selected Training Live Settings:</h4>
+      <h4>📌 Live Active Sessions:</h4>
       <div id="liveContent">Fetching...</div>
     </div>
   </div>
 
   <script>
-    // ================= CONFIGURATION =================
     const GITHUB_USERNAME = "cscchhattisgarh"; 
     const REPO_NAME = "labour-ekcy-training-attendance"; 
     const FILE_PATH = "config.json"; 
     const API_URL = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
-    // =================================================
+
+    // UTF-8 Helpers for Base64 (Safe for Hindi & special characters)
+    function utf8ToBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    function base64ToUtf8(str) {
+      const binary = atob(str.replace(/\s/g, ''));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return new TextDecoder().decode(bytes);
+    }
+
+    // Topic wise Default Google Form URLs Mapping
+    const DEFAULT_FORM_URLS = {
+      "labour_ekyc": "https://docs.google.com/forms/d/e/1FAIpQLSdJ3iXm302K-I1qNsnS5I6m1s1bB8iA1B_e-sample1/viewform?embedded=true",
+      "wifi_choupal": "https://docs.google.com/forms/d/e/1FAIpQLSdJ3iXm302K-I1qNsnS5I6m1s1bB8iA1B_e-sample2/viewform?embedded=true"
+    };
 
     document.getElementById("token").value = localStorage.getItem("gh_pat") || "";
 
-    // Current time formatted for datetime-local (YYYY-MM-DDTHH:MM)
     function getCurrentDateTimeLocal() {
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      return `${year}-${month}-${day}T${hours}:${minutes}`;
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}T${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     }
 
-    async function handleTrainingChange() {
-      const selectedValue = document.getElementById("trainingSelect").value;
-      const isSelected = !!selectedValue;
+    function generateUniqueId() {
+      const topic = document.getElementById("trainingSelect").value;
+      const trainer = document.getElementById("trainerSelect").value;
+      if (!topic || !trainer) return "";
+      return `${topic}_${trainer}`;
+    }
 
+    async function handleSelectionChange() {
+      const topic = document.getElementById("trainingSelect").value;
+      const trainer = document.getElementById("trainerSelect").value;
+      const isSelected = !!(topic && trainer);
+
+      const formUrlInput = document.getElementById("formUrl");
       const startTimeInput = document.getElementById("startTime");
       const expiryInput = document.getElementById("expiry");
 
-      document.getElementById("formUrl").disabled = !isSelected;
+      if (topic && DEFAULT_FORM_URLS[topic]) {
+        formUrlInput.value = DEFAULT_FORM_URLS[topic];
+      }
+
+      formUrlInput.disabled = !isSelected;
       document.getElementById("password").disabled = !isSelected;
       startTimeInput.disabled = !isSelected;
       expiryInput.disabled = !isSelected;
       document.getElementById("fetchBtn").disabled = !isSelected;
       document.getElementById("saveBtn").disabled = !isSelected;
 
-      // Inputs default blank rakhein
-      document.getElementById("password").value = "";
-      startTimeInput.value = "";
-      expiryInput.value = "";
-      document.getElementById("formUrl").value = "";
-
-      // Min constraint: Start time current time se pehle ka na ho
       const nowFormatted = getCurrentDateTimeLocal();
       startTimeInput.min = nowFormatted;
       expiryInput.min = nowFormatted;
-
-      document.getElementById("currentConfigBox").style.display = "none";
-      document.getElementById("status").textContent = "";
-
-      // Auto-populate Form URL
-      if (isSelected) {
-        const token = document.getElementById("token").value.trim();
-        const headers = token ? { "Authorization": `token ${token}` } : {};
-        try {
-          const res = await fetch(API_URL + '?_=' + Date.now(), { headers });
-          if (res.ok) {
-            const data = await res.json();
-            const decodedText = decodeURIComponent(escape(atob(data.content)));
-            const configData = JSON.parse(decodedText);
-            
-            if (configData.trainings && Array.isArray(configData.trainings)) {
-              const matched = configData.trainings.find(t => t.id === selectedValue);
-              if (matched && matched.form_url) {
-                document.getElementById("formUrl").value = matched.form_url;
-              }
-            }
-          }
-        } catch (e) {
-          console.error("Auto populate error", e);
-        }
-      }
     }
 
-    // Dynamic min update for Expiry Input based on Start Time selection
     function handleStartTimeChange() {
       const startVal = document.getElementById("startTime").value;
       const expiryInput = document.getElementById("expiry");
@@ -171,24 +176,15 @@
         if (parts.length < 2) return isoStr;
         const dateParts = parts[0].split("-");
         const timeParts = parts[1].split("+")[0];
-        return `${dateParts[1]}/${dateParts[2]}/${dateParts[0]}, ${timeParts} IST`;
-      } catch (e) {
-        return isoStr;
-      }
+        return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${timeParts} IST`;
+      } catch (e) { return isoStr; }
     }
 
     async function fetchCurrentConfig() {
-      const selectedId = document.getElementById("trainingSelect").value;
       const token = document.getElementById("token").value.trim();
       const status = document.getElementById("status");
       const box = document.getElementById("currentConfigBox");
       const liveContent = document.getElementById("liveContent");
-      
-      if (!selectedId) {
-        status.textContent = "❌ Please select a training first!";
-        status.className = "status error";
-        return;
-      }
 
       status.textContent = "Fetching Live Config...";
       status.className = "status";
@@ -199,35 +195,32 @@
 
         if (res.ok) {
           const getData = await res.json();
-          const decodedText = decodeURIComponent(escape(atob(getData.content)));
+          const decodedText = base64ToUtf8(getData.content);
           const configData = JSON.parse(decodedText);
 
           let html = "";
-          if (configData.trainings && Array.isArray(configData.trainings)) {
-            const selectedTraining = configData.trainings.find(t => t.id === selectedId);
-            
-            if (selectedTraining) {
-              html = `<div class="training-item">
-                <strong style="color:#0f766e;">📌 ${selectedTraining.name}:</strong><br>
-                <b>Password:</b> ${selectedTraining.password || 'Not Set'}<br>
-                <b>Start Time:</b> ${formatISTDisplay(selectedTraining.start_time)}<br>
-                <b>Expiry:</b> ${formatISTDisplay(selectedTraining.expiry)}<br>
-                <b>URL:</b> ${selectedTraining.form_url || 'Not Set'}
+          if (configData.trainings && Array.isArray(configData.trainings) && configData.trainings.length > 0) {
+            configData.trainings.forEach(t => {
+              html += `<div class="training-item">
+                <strong style="color:#0f766e;">📌 ${t.name || t.id}:</strong><br>
+                <b>Password:</b> ${t.password || 'N/A'}<br>
+                <b>Start:</b> ${formatISTDisplay(t.start_time)}<br>
+                <b>Expiry:</b> ${formatISTDisplay(t.expiry)}
               </div>`;
-            } else {
-              html = "<div>No data found for selected training.</div>";
-            }
+            });
+          } else {
+            html = "<div>No active sessions found.</div>";
           }
           liveContent.innerHTML = html;
           box.style.display = "block";
-          status.textContent = "✅ Active settings fetched!";
+          status.textContent = "✅ Active sessions fetched!";
           status.className = "status success";
         } else {
-          status.textContent = "❌ Error fetching live config file from API!";
+          status.textContent = "❌ Error fetching live config file! Check Token or Permissions.";
           status.className = "status error";
         }
       } catch (e) {
-        status.textContent = "❌ Network Error while fetching live config!";
+        status.textContent = "❌ Network Error!";
         status.className = "status error";
       }
     }
@@ -244,7 +237,10 @@
 
     async function updateConfig() {
       const token = document.getElementById("token").value.trim();
-      const selectedId = document.getElementById("trainingSelect").value;
+      const uniqueId = generateUniqueId();
+      const topicText = document.getElementById("trainingSelect").options[document.getElementById("trainingSelect").selectedIndex].text;
+      const trainerText = document.getElementById("trainerSelect").options[document.getElementById("trainerSelect").selectedIndex].text;
+      
       const formUrl = document.getElementById("formUrl").value.trim();
       const pwd = document.getElementById("password").value.trim();
       const startVal = document.getElementById("startTime").value;
@@ -252,13 +248,7 @@
       const status = document.getElementById("status");
       const saveBtn = document.getElementById("saveBtn");
 
-      if (!selectedId) {
-        status.textContent = "❌ Kripya pehle Training select karein!";
-        status.className = "status error";
-        return;
-      }
-
-      if (!token || !formUrl || !pwd || !startVal || !expVal) {
+      if (!uniqueId || !token || !formUrl || !pwd || !startVal || !expVal) {
         status.textContent = "❌ Kripya sabhi mandatory fields bharein!";
         status.className = "status error";
         return;
@@ -277,22 +267,19 @@
         return;
       }
 
-      // Time Strict Validation Logic
-      const now = new Date();
+      const sessionName = `${topicText} (${trainerText})`;
       const formattedStart = `${startVal}:00+05:30`;
       const formattedExpiry = `${expVal}:00+05:30`;
-      const startDateObj = new Date(formattedStart);
-      const expiryDateObj = new Date(formattedExpiry);
 
-      // Check 1: Start Time future ka hona chahiye
-      if (startDateObj < now) {
-        status.textContent = "❌ Start Date & Time abhi ke time ke baad ka hona chahiye!";
+      // 2-minute grace buffer so user current minute input doesn't fail immediately
+      const nowBuffer = new Date(Date.now() - 2 * 60 * 1000);
+      if (new Date(formattedStart) < nowBuffer) {
+        status.textContent = "❌ Start Date & Time aane wale samay ka hona chahiye!";
         status.className = "status error";
         return;
       }
 
-      // Check 2: Expiry Time Start Time ke baad ka hona chahiye
-      if (startDateObj >= expiryDateObj) {
+      if (new Date(formattedStart) >= new Date(formattedExpiry)) {
         status.textContent = "❌ Expiry Date/Time Start Date/Time ke baad ka hona chahiye!";
         status.className = "status error";
         return;
@@ -300,57 +287,53 @@
 
       localStorage.setItem("gh_pat", token);
       saveBtn.disabled = true;
-      status.textContent = "Fetching current SHA from GitHub API...";
-      status.className = "status";
+      status.textContent = "Updating GitHub Repository...";
 
       try {
-        const getRes = await fetch(API_URL, {
-          headers: { "Authorization": `token ${token}` }
-        });
-
+        const getRes = await fetch(API_URL, { headers: { "Authorization": `token ${token}` } });
         let sha = "";
         let existingConfig = { trainings: [] };
 
         if (getRes.ok) {
           const getData = await getRes.json();
           sha = getData.sha;
-          const decodedText = decodeURIComponent(escape(atob(getData.content)));
-          existingConfig = JSON.parse(decodedText);
+          existingConfig = JSON.parse(base64ToUtf8(getData.content));
         }
 
         if (!existingConfig.trainings || !Array.isArray(existingConfig.trainings)) {
-          existingConfig.trainings = [
-            { id: "labour_ekyc", name: "Labour eKYC Training", password: "", start_time: "", expiry: "", form_url: "" },
-            { id: "wifi_choupal", name: "WiFi Choupal Training", password: "", start_time: "", expiry: "", form_url: "" }
-          ];
+          existingConfig.trainings = [];
         }
 
-        let targetIndex = existingConfig.trainings.findIndex(t => t.id === selectedId);
+        let targetIndex = existingConfig.trainings.findIndex(t => t.id === uniqueId);
+        const newEntry = {
+          id: uniqueId,
+          name: sessionName,
+          password: pwd,
+          start_time: formattedStart,
+          expiry: formattedExpiry,
+          form_url: formUrl
+        };
+
         if (targetIndex !== -1) {
-          existingConfig.trainings[targetIndex].password = pwd;
-          existingConfig.trainings[targetIndex].start_time = formattedStart;
-          existingConfig.trainings[targetIndex].expiry = formattedExpiry;
-          existingConfig.trainings[targetIndex].form_url = formUrl;
+          existingConfig.trainings[targetIndex] = newEntry;
+        } else {
+          existingConfig.trainings.push(newEntry);
         }
 
-        const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(existingConfig, null, 2))));
+        const contentEncoded = utf8ToBase64(JSON.stringify(existingConfig, null, 2));
 
-        status.textContent = "Updating GitHub Repository...";
         const putRes = await fetch(API_URL, {
           method: "PUT",
-          headers: {
-            "Authorization": `token ${token}`,
-            "Content-Type": "application/json"
-          },
+          headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: `Updated ${selectedId} settings via Admin Panel`,
+            message: `Updated session: ${sessionName}`,
             content: contentEncoded,
             sha: sha ? sha : undefined
           })
         });
 
         if (putRes.ok) {
-          status.textContent = "✅ Config Successfully Updated!";
+          status.textContent = "✅ Session Successfully Live!";
           status.className = "status success";
 
           document.getElementById("password").value = "";
@@ -364,7 +347,7 @@
           status.className = "status error";
         }
       } catch (err) {
-        status.textContent = "❌ Network Error! Connection check karein.";
+        status.textContent = "❌ Network Error!";
         status.className = "status error";
       } finally {
         saveBtn.disabled = false;
